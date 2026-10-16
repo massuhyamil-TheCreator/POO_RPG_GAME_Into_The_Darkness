@@ -17,17 +17,11 @@ Vista final:
 -tener mapa
 -elegir primer nivel
 -batalla: enemigo aleatorio, pelear y ganar
+
 -volver a mostrar el mapa
 -dar opciones de mejorar/intercambiar items
 -volver a elegir camino de mapa
 -volver a tener batalla
 ...
 -llegar al final y elgir uno de los 3 jefes finales
-
-Lucca:
-
-Facu:
-
-Franco:
-
-Yamil:
+-
