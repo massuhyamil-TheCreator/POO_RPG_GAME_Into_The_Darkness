@@ -2,3 +2,11 @@
 Juego RPG para la clase de Paradigma Orientado a Objetos.
 
 Cosas pendientes:
+
+Lucca:
+
+Facu:
+
+Franco:
+
+Yamil:
