@@ -19,7 +19,9 @@ Vista final:
 -batalla: enemigo aleatorio, pelear y ganar
 
 -volver a mostrar el mapa
+
 -dar opciones de mejorar/intercambiar items
+
 -volver a elegir camino de mapa
 -volver a tener batalla
 ...
