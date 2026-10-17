@@ -10,7 +10,12 @@ Ya hecho:
 -app: main para poder ejecutar
 
 -mapa: el mapa
-
+.
+.
+.
+.
+.
+.
 Cosas pendientes:
 
 -modificar los enemigos/personajes dentro de carpetas separadas
@@ -21,7 +26,15 @@ Cosas pendientes:
 
 -agregar una pausa en ronda para toma de decisiones: cambiar arma, curarse, elegir ataque
 
+.
+.
+.
+.
+.
+.
 Vista final: 
+
+-mostrar 3 partidas guardadas, crear partida y poner nobre, y personaje con el que jugar(no cambia)
 
 -tener mapa
 
@@ -38,5 +51,7 @@ Vista final:
 -volver a tener batalla
 
 -llegar al final y elgir uno de los 3 jefes finales
+
+-mostrar estadisticas finales: 
 
 
