@@ -1,14 +1,15 @@
+package entidades.personajes;
+import entidades.Entidad;
+
 public class Personaje extends Entidad{
-    private int experiencia;
     private int inventario;
     private int habilidades;
     private String atributoDistintivo;
 
-    public Personaje(String nombre,int ataque,int puntosDeSalud,int experiencia, int inventario, int habilidades, String atributoDistintivo,int velocidad) {
-        super(nombre, ataque, puntosDeSalud,velocidad);
-        this.experiencia = experiencia;
-        this.habilidades = habilidades;
+    public Personaje(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int inventario, int habilidades, String atributoDistintivo) {
+        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica);
         this.inventario = inventario;
+        this.habilidades = habilidades;
         this.atributoDistintivo = atributoDistintivo;
     }
 }

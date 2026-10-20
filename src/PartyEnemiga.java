@@ -1,3 +1,4 @@
+import entidades.enemigos.Enemigo;
 import java.util.List;
 
 public class PartyEnemiga {

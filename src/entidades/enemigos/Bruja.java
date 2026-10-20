@@ -1,3 +1,5 @@
+package entidades.enemigos;
+
 public class Bruja extends Enemigo {
 
     private int vitalidad;

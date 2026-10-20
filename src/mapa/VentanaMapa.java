@@ -5,10 +5,9 @@ import java.awt.*;
 
 public class VentanaMapa extends JFrame {
     private static final Color FONDO = new Color(28, 28, 34);
-    private final PanelMapa panelMapa1;
 
     private Mapa mapa = new CreadorMapa().generate(System.nanoTime());
-    private final PanelMapa panelMapa;
+    private final PanelMapa panelMapa = new PanelMapa(mapa, this::actualizarEstado);
     private final JLabel estado = new JLabel();
 
     public VentanaMapa() {
@@ -16,7 +15,6 @@ public class VentanaMapa extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        panelMapa1;
 
         add(crearPanelEquipo(), BorderLayout.WEST);
         add(panelMapa, BorderLayout.CENTER);

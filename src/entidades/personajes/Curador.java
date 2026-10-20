@@ -1,3 +1,5 @@
+package entidades.personajes;
+
 public class Curador extends Personaje {
 
     private int curacion;

@@ -1,3 +1,4 @@
+import entidades.personajes.Personaje;
 import java.util.List;
 
 public class PartyAliada {

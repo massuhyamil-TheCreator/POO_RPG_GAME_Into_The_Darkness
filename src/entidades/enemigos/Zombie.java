@@ -1,3 +1,5 @@
+package entidades.enemigos;
+
 public class Zombie extends Enemigo {
 
     private int vitalidad;

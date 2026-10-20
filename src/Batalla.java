@@ -1,3 +1,6 @@
+import entidades.personajes.Personaje;
+import entidades.enemigos.Enemigo;
+import entidades.Entidad;
 import java.util.List;
 
 public class Batalla {

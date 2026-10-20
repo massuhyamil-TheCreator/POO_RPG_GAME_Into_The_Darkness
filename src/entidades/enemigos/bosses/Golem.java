@@ -1,3 +1,6 @@
+package entidades.enemigos.bosses;
+import entidades.enemigos.Enemigo;
+
 public class Golem extends Enemigo {
 
     private int vitalidad;

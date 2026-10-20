@@ -1,3 +1,5 @@
+package entidades.enemigos;
+
 public class Esqueleto extends Enemigo {
 
     private int vitalidad;

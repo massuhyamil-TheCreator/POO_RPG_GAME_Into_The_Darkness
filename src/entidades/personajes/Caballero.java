@@ -1,3 +1,5 @@
+package entidades.personajes;
+
 public class Caballero extends Personaje {
 
     private int constitucion;

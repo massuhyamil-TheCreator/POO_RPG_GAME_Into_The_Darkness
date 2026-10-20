@@ -1,3 +1,5 @@
+package entidades.personajes;
+
 public class Asesino extends Personaje {
 
     private int letalidad;

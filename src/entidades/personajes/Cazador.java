@@ -1,3 +1,5 @@
+package entidades.personajes;
+
 public class Cazador extends Personaje {
 
     private int astucia;
