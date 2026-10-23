@@ -1,5 +1,4 @@
 package mapa;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -70,8 +69,8 @@ public class CreadorMapa {
             for (Nodo n : filas.get(f)) {
                 if (f == 0) n.setTpe(TipoNodo.INICIO);
                 else if (f == filas.size() - 1) n.setTpe(TipoNodo.BOSS);
-                else if (f == 1) n.setTpe(TipoNodo.Batalla);                  // primera fila siempre batalla
                 else if (f == filas.size() - 2) n.setTpe(TipoNodo.Fogata);    // descanso antes del boss
+                else if (f % 3 == 1) n.setTpe(TipoNodo.Batalla);              // filas 1, 4, 7: todas batalla normal
                 else n.setTpe(tipoAleatorio(f, rng));
             }
         }
