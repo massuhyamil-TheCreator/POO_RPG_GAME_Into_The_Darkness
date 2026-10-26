@@ -18,8 +18,10 @@ public class PantallaMenu extends JPanel {
     private JButton botonSalir;
     private int anchoBoton = 160;
     private int altoBoton = 55;
+    private VentanaPrincipal ventana;
 
-    public PantallaMenu() {
+    public PantallaMenu(VentanaPrincipal ventana) {
+        this.ventana = ventana;
         ImageIcon icon = new ImageIcon("src/ui/imagenes/Into_The_Darkness_MainTitle.png");
         fondo = icon.getImage();
         setLayout(null);
@@ -50,6 +52,7 @@ public class PantallaMenu extends JPanel {
 
         botonJugar.setRolloverIcon(iconoJugarSeleccionado);
         botonJugar.setPressedIcon(iconoJugarPresionado);
+        botonJugar.addActionListener(e -> ventana.cambiarPantallaConFundido("partidas"));
         add(botonJugar);
 
         BufferedImage opcionesNormalImg = hoja.getSubimage(0 * anchoCelda, 1 * altoCelda, anchoCelda, altoCelda);
