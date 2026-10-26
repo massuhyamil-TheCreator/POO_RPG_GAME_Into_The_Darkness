@@ -1,12 +1,14 @@
 package entidades.enemigos;
 
 public class Esqueleto extends Enemigo {
+    public Esqueleto() { super("ESQUELETO"); }
 
     private int vitalidad;
 
     public Esqueleto(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int experienciaOtorgada, int oroOtorgado, String objetoOtorgado, int vitalidad) {
         super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica, experienciaOtorgada, oroOtorgado, objetoOtorgado);
         this.vitalidad = vitalidad;
+        asignarTipo("ESQUELETO");
     }
 
     public int getVitalidad() {

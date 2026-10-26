@@ -44,10 +44,13 @@ public class PantallaPartidas extends JPanel {
         ImageIcon icon = new ImageIcon("src/ui/imagenes/Into_The_Darkness_PlayMenu.png");
         fondo = icon.getImage();
 
+        // Si la fuente opcional no está instalada en el proyecto, se usa una del sistema.
+        fuenteTarjetas = new Font("Serif", Font.PLAIN, 24);
         try {
-            fuenteTarjetas = Font.createFont(Font.TRUETYPE_FONT, new File("src/ui/fuentes/CormorantGaramond-SemiBold.ttf"));
+            fuenteTarjetas = Font.createFont(Font.TRUETYPE_FONT,
+                    new File("src/ui/fuentes/CormorantGaramond-SemiBold.ttf"));
         } catch (IOException | FontFormatException e) {
-            System.out.println("Error al cargar la fuente: " + e.getMessage());
+            // Se mantiene la fuente alternativa; la pantalla puede seguir funcionando.
         }
 
         BufferedImage hojaPaneles = null;

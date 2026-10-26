@@ -1,17 +1,39 @@
+package objetos.equipables;
+import objetos.Item;
+/** Datos compartidos por armas y armaduras. No modifica ni equipa personajes. */
 public abstract class Equipables extends Item {
-
     private String tipo;
+    private String clasePermitida;
+    private int bonoVida, bonoAtaqueFisico, bonoAtaqueMagico;
+    private int bonoDefensaFisica, bonoDefensaMagica, bonoVelocidad;
+    private int bonoCuracionPorcentaje, bonoCriticoPorcentaje;
 
+    // Constructor del proyecto original.
     public Equipables(int id, String nombre, String descripcion, double precio, String tipo) {
         super(id, nombre, descripcion, precio);
         this.tipo = tipo;
     }
+    public String getTipo() {return tipo;}
+    public void setTipo(String tipo) {this.tipo = tipo;}
+    public String getClasePermitida() {return clasePermitida;}
+    public boolean permiteClase(String clase) {return clasePermitida != null && clasePermitida.equals(clase);}
+    public void setClasePermitida(String clase) {this.clasePermitida = clase;}
 
-    public String getTipo() {
-        return tipo;
-    }
+    public int getBonoVida() {return bonoVida;}
+    public int getBonoAtaqueFisico() {return bonoAtaqueFisico;}
+    public int getBonoAtaqueMagico() {return bonoAtaqueMagico;}
+    public int getBonoDefensaFisica() {return bonoDefensaFisica;}
+    public int getBonoDefensaMagica() {return bonoDefensaMagica;}
+    public int getBonoVelocidad() {return bonoVelocidad;}
+    public int getBonoCuracionPorcentaje() {return bonoCuracionPorcentaje;}
+    public int getBonoCriticoPorcentaje() {return bonoCriticoPorcentaje;}
 
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
+    // Únicamente guarda las bonificaciones: NO las aplica al personaje.
+    public void definirBonos(int vida, int fisico, int magico, int defFisica,
+                             int defMagica, int velocidad, int curacion, int critico) {
+        this.bonoVida=vida; this.bonoAtaqueFisico=fisico; this.bonoAtaqueMagico=magico;
+        this.bonoDefensaFisica=defFisica; this.bonoDefensaMagica=defMagica;
+        this.bonoVelocidad=velocidad; this.bonoCuracionPorcentaje=curacion;
+        this.bonoCriticoPorcentaje=critico;
     }
 }
