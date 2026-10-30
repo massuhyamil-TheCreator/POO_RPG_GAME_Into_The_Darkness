@@ -33,6 +33,19 @@ public class Mapa {
         nodoActual.setVisitado(true);
     }
 
+    public Nodo buscarNodo(int id) {
+        for (List<Nodo> fila : rows)
+            for (Nodo n : fila)
+                if (n.getId() == id) return n;
+        return null;
+    }
+
+    // para cargar una partida guardada
+    public void ubicarEn(Nodo node) {
+        nodoActual = node;
+        nodoActual.setVisitado(true);
+    }
+
     public boolean llegoAlBoss() {
         return nodoActual.getTpe() == TipoNodo.BOSS;
     }

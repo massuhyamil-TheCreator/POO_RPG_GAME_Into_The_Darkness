@@ -1,14 +1,31 @@
 package entidades.personajes;
+import entidades.Categoria;
+import entidades.Estadistica;
+import entidades.efectos.ModificadorEstadistica;
+import entidades.habilidades.Habilidad;
+import entidades.habilidades.Invocacion;
+import entidades.habilidades.Objetivo;
+import entidades.habilidades.Provocacion;
+import entidades.pasivas.PactoDelCaballero;
 
 public class Caballero extends Personaje {
-    public Caballero() { super("CABALLERO_SAGRADO"); }
 
     private int constitucion;
 
-    public Caballero(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int inventario, int habilidades, String atributoDistintivo, int constitucion) {
-        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica, inventario, habilidades, atributoDistintivo);
-        this.constitucion = constitucion;
-        asignarClase("CABALLERO_SAGRADO");
+    public Caballero(String nombre) {
+        super(nombre, "Constitución", 65, 6, 85, 3, 1, 5, 3);
+        this.constitucion = 10;
+        aplicarEfecto(new PactoDelCaballero());
+        setBasico(new Habilidad("Mandoble Divino", 0, Objetivo.UN_ENEMIGO, 4, 0)
+                .conDanioExtraContra(Categoria.NO_MUERTO, 1));
+        agregarHabilidad(new Provocacion());
+        agregarHabilidad(new Habilidad("Discurso Heroico", 20, Objetivo.TODOS_LOS_ALIADOS, 0, 0)
+                .quitandoNegativos()
+                .conEfecto(() -> new ModificadorEstadistica("Discurso Heroico", 2)
+                        .porcentaje(Estadistica.ATAQUE_FISICO, 20)
+                        .porcentaje(Estadistica.ATAQUE_MAGICO, 20), 100));
+        agregarHabilidad(new Invocacion("Guardia Real", 20, () -> new GuardiaReal(), 1)
+                .conEnfriamiento(4));
     }
 
     public int getConstitucion() {
@@ -18,4 +35,16 @@ public class Caballero extends Personaje {
     public void setConstitucion(int constitucion) {
         this.constitucion = constitucion;
     }
+
+    @Override
+    protected void subirNivel() {
+        subirNivel(8, 1, 0, 1, 1, 0);
+        constitucion++;
+    }
+
+    @Override
+    public int getCapacidadInventario() {
+        return 6;
+    }
 }
+

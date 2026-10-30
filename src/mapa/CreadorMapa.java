@@ -1,4 +1,5 @@
 package mapa;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -37,6 +38,7 @@ public class CreadorMapa {
     //   1 -> 2: el inicial va a los dos       2 -> 4: cada uno se divide en dos
     //   4 -> 3, 3 -> 4, 3 -> 2: los del medio comparten un nodo       2 -> 1: ambos van al boss
     // Asi no hay cruces, todos los nodos tienen entrada y salida, y el resultado es simetrico.
+    // Excepcion: a la fila anterior al boss se llega desde todos los nodos (ahi si se cruzan).
     private List<List<Nodo>> generarCaminos(List<List<Nodo>> filas) {
         List<List<Nodo>> caminos = new ArrayList<>();
         for (int f = 0; f < totalfilas - 1; f++) {
@@ -44,9 +46,11 @@ public class CreadorMapa {
             List<Nodo> destino = filas.get(f + 1);
             int a = origen.size();
             int b = destino.size();
+            // a la fila de descanso (Fogata o Herrero) se llega desde cualquier nodo: siempre se puede elegir
+            boolean haciaDescanso = f + 1 == totalfilas - 2;
             for (int i = 0; i < a; i++) {
                 for (int j = 0; j < b; j++) {
-                    if (i * b < (j + 1) * a && j * a < (i + 1) * b) {
+                    if (haciaDescanso || (i * b < (j + 1) * a && j * a < (i + 1) * b)) {
                         List<Nodo> enlace = new ArrayList<>();
                         enlace.add(origen.get(i));
                         enlace.add(destino.get(j));
@@ -69,8 +73,8 @@ public class CreadorMapa {
             for (Nodo n : filas.get(f)) {
                 if (f == 0) n.setTpe(TipoNodo.INICIO);
                 else if (f == filas.size() - 1) n.setTpe(TipoNodo.BOSS);
-                else if (f == filas.size() - 2) n.setTpe(TipoNodo.Fogata);    // descanso antes del boss
-                else if (f % 3 == 1) n.setTpe(TipoNodo.Batalla);              // filas 1, 4, 7: todas batalla normal
+                else if (f == 1) n.setTpe(TipoNodo.Batalla);                  // primera fila siempre batalla
+                else if (f == filas.size() - 2) n.setTpe(n.getColumna() == 0 ? TipoNodo.Fogata : TipoNodo.Herrero); // antes del boss: se elige uno
                 else n.setTpe(tipoAleatorio(f, rng));
             }
         }
@@ -80,7 +84,7 @@ public class CreadorMapa {
         int r = rng.nextInt(100);
         if (r < 45) return TipoNodo.Batalla;
         if (r < 55) return fila >= 4 ? TipoNodo.BatallaElite : TipoNodo.Batalla;
-        if (r < 67) return TipoNodo.Tienda;
+        if (r < 67) return TipoNodo.Tesoro;
         if (r < 82) return TipoNodo.Evento;
         if (r < 92) return TipoNodo.Fogata;
         return TipoNodo.Herrero;

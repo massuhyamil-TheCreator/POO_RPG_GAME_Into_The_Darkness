@@ -7,7 +7,7 @@ public class VentanaMapa extends JFrame {
     private static final Color FONDO = new Color(28, 28, 34);
 
     private Mapa mapa = new CreadorMapa().generate(System.nanoTime());
-    private final PanelMapa panelMapa = new PanelMapa(mapa, this::actualizarEstado);
+    private final PanelMapa panelMapa = new PanelMapa(mapa, this::moverA);
     private final JLabel estado = new JLabel();
 
     public VentanaMapa() {
@@ -24,6 +24,11 @@ public class VentanaMapa extends JFrame {
         actualizarEstado();
         pack();
         setLocationRelativeTo(null);
+    }
+
+    private void moverA(Nodo nodo) {
+        mapa.moveTo(nodo);
+        actualizarEstado();
     }
 
     private void actualizarEstado() {

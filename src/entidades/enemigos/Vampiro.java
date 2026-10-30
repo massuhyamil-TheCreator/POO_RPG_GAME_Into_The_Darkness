@@ -1,21 +1,18 @@
 package entidades.enemigos;
+import entidades.Categoria;
+import entidades.efectos.Encantado;
+import entidades.habilidades.Habilidad;
+import entidades.habilidades.Objetivo;
 
 public class Vampiro extends Enemigo {
-    public Vampiro() { super("VAMPIRO"); }
 
-    private int vitalidad;
-
-    public Vampiro(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int experienciaOtorgada, int oroOtorgado, String objetoOtorgado, int vitalidad) {
-        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica, experienciaOtorgada, oroOtorgado, objetoOtorgado);
-        this.vitalidad = vitalidad;
-        asignarTipo("VAMPIRO");
-    }
-
-    public int getVitalidad() {
-        return vitalidad;
-    }
-
-    public void setVitalidad(int vitalidad) {
-        this.vitalidad = vitalidad;
+    public Vampiro(String nombre) {
+        super(nombre, Categoria.CRIATURA_NOCTURNA, 30, 12, 85, 2, 2, 2, 2, 18, 12);
+        setBasico(new Habilidad("Sed de Sangre", 0, Objetivo.UN_ENEMIGO, 3, 2)
+                .conRoboDeVida(1));
+        agregarHabilidad(new Habilidad("Curación Vampírica", 0, Objetivo.SI_MISMO, 0, 0)
+                .conCuracion(5));
+        agregarHabilidad(new Habilidad("Encanto Vampírico", 0, Objetivo.UN_ENEMIGO, 0, 8)
+                .conEfecto(() -> new Encantado(this, 2), 100));
     }
 }

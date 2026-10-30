@@ -1,50 +1,74 @@
 package entidades.enemigos;
+import combate.Batalla;
+import entidades.Categoria;
 import entidades.Entidad;
+import entidades.habilidades.Habilidad;
+import entidades.habilidades.Objetivo;
+import objetos.Catalogo;
+import objetos.Item;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
-public class Enemigo extends Entidad {
+public abstract class Enemigo extends Entidad {
+
+    private static final Random AZAR = new Random();
+    public static final int PROBABILIDAD_BOTIN = 30;
+
     private int experienciaOtorgada;
     private int oroOtorgado;
-    private String objetoOtorgado;
-    private String tipoEnemigo;
-    /** XP, oro y drop pendientes de diseñar: 0 y null no son recompensas definitivas. */
-    protected Enemigo(String tipo) {
-        super(nombreDelEnemigo(tipo), categoriaDelEnemigo(tipo), entidades.CatalogoEstadisticas.enemigo(tipo));
-        this.tipoEnemigo=tipo;
-        definirHabilidades(entidades.CatalogoHabilidades.enemigo(tipo));
-    }
-    protected void asignarTipo(String tipo) {
-        this.tipoEnemigo=tipo;
-        definirHabilidades(entidades.CatalogoHabilidades.enemigo(tipo));
-    }
-    private static String nombreDelEnemigo(String tipo) {
-        switch (tipo) {
-            case "ZOMBIE": return "Zombie";
-            case "ESQUELETO": return "Esqueleto";
-            case "LOBO_SALVAJE": return "Lobo Salvaje";
-            case "HOMBRE_LOBO": return "Hombre Lobo";
-            case "VAMPIRO": return "Vampiro";
-            case "BRUJA": return "Bruja";
-            case "DRAGON": return "Dragón";
-            case "GOLEM": return "Golem";
-            case "REY_VAMPIRO": return "Rey Vampiro";
-            default: return tipo;
-        }
-    }
-    private static String categoriaDelEnemigo(String tipo) {
-        if (tipo.equals("ZOMBIE") || tipo.equals("ESQUELETO")) return "No Muerto";
-        if (tipo.equals("LOBO_SALVAJE") || tipo.equals("HOMBRE_LOBO")) return "Bestia";
-        if (tipo.equals("VAMPIRO") || tipo.equals("BRUJA") || tipo.equals("REY_VAMPIRO")) return "Criatura Nocturna";
-        return "Jefe";
-    }
-    public String getTipoEnemigo(){return tipoEnemigo;}
-    public int getExperienciaOtorgada(){return experienciaOtorgada;}
-    public int getOroOtorgado(){return oroOtorgado;}
-    public String getObjetoOtorgado(){return objetoOtorgado;}
+    private Item objetoOtorgado;
 
-    public Enemigo(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int experienciaOtorgada, int oroOtorgado, String objetoOtorgado) {
-        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica);
+    public Enemigo(String nombre, Categoria categoria, int vida, int velocidad, int precision, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int experienciaOtorgada, int oroOtorgado) {
+        super(nombre, categoria, vida, vida, 0, 0, velocidad, precision, 1, 0, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica);
         this.experienciaOtorgada = experienciaOtorgada;
         this.oroOtorgado = oroOtorgado;
-        this.objetoOtorgado = objetoOtorgado;
+        if (AZAR.nextInt(100) < PROBABILIDAD_BOTIN) this.objetoOtorgado = Catalogo.botinAlAzar();
     }
+
+    public Habilidad elegirHabilidad(Batalla batalla) {
+        List<Habilidad> opciones = new ArrayList<>();
+        opciones.add(getBasico());
+        for (Habilidad habilidad : getHabilidades()) {
+            if (habilidad.estaDisponible() && habilidad.convieneUsar(this, batalla)) {
+                opciones.add(habilidad);
+            }
+        }
+        return opciones.get(AZAR.nextInt(opciones.size()));
+    }
+
+    public Entidad elegirObjetivo(Habilidad habilidad, Batalla batalla) {
+        if (habilidad.getObjetivo().hayQueElegirEnemigo()) {
+            Entidad forzado = getObjetivoForzado();
+            if (forzado != null) return forzado;
+            List<Entidad> enemigos = batalla.enemigosDe(this);
+            return enemigos.get(AZAR.nextInt(enemigos.size()));
+        }
+        if (habilidad.getObjetivo().hayQueElegirAliado()) {
+            Entidad masHerido = null;
+            for (Entidad aliado : batalla.aliadosDe(this)) {
+                if (aliado == this && habilidad.getObjetivo() == Objetivo.OTRO_ALIADO) continue;
+                if (masHerido == null || aliado.getPuntosDeSalud() < masHerido.getPuntosDeSalud()) masHerido = aliado;
+            }
+            return masHerido;
+        }
+        return null;
+    }
+
+    public int robarOro(int maximo) {
+        int robado = Math.min(maximo, oroOtorgado);
+        oroOtorgado -= robado;
+        return robado;
+    }
+
+    public Item robarObjeto() {
+        Item robado = objetoOtorgado;
+        objetoOtorgado = null;
+        return robado;
+    }
+
+    public void setObjetoOtorgado(Item objetoOtorgado) { this.objetoOtorgado = objetoOtorgado; }
+    public int getExperienciaOtorgada() { return experienciaOtorgada; }
+    public int getOroOtorgado() { return oroOtorgado; }
+    public Item getObjetoOtorgado() { return objetoOtorgado; }
 }

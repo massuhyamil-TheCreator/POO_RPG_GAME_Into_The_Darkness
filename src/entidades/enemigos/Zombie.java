@@ -1,21 +1,20 @@
 package entidades.enemigos;
+import entidades.Categoria;
+import entidades.Estadistica;
+import entidades.efectos.DanioPorTurno;
+import entidades.efectos.ModificadorEstadistica;
+import entidades.habilidades.Habilidad;
+import entidades.habilidades.Objetivo;
 
 public class Zombie extends Enemigo {
-    public Zombie() { super("ZOMBIE"); }
 
-    private int vitalidad;
-
-    public Zombie(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int experienciaOtorgada, int oroOtorgado, String objetoOtorgado, int vitalidad) {
-        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica, experienciaOtorgada, oroOtorgado, objetoOtorgado);
-        this.vitalidad = vitalidad;
-        asignarTipo("ZOMBIE");
-    }
-
-    public int getVitalidad() {
-        return vitalidad;
-    }
-
-    public void setVitalidad(int vitalidad) {
-        this.vitalidad = vitalidad;
+    public Zombie(String nombre) {
+        super(nombre, Categoria.NO_MUERTO, 35, 5, 80, 3, 1, 2, 1, 15, 8);
+        setBasico(new Habilidad("Mordida", 0, Objetivo.UN_ENEMIGO, 5, 0));
+        agregarHabilidad(new Habilidad("Rasguño Pútrido", 0, Objetivo.UN_ENEMIGO, 3, 1)
+                .conEfecto(() -> new DanioPorTurno("Putrefacción", 1, 3), 100));
+        agregarHabilidad(new Habilidad("Vómito", 0, Objetivo.VARIOS_ENEMIGOS, 0, 0)
+                .conCantidadDeObjetivos(1, 2)
+                .conEfecto(() -> new ModificadorEstadistica("Ralentizado", 2).porcentaje(Estadistica.VELOCIDAD, -30), 100));
     }
 }

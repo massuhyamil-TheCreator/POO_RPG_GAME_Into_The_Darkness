@@ -1,14 +1,32 @@
 package entidades.personajes;
+import entidades.efectos.Invulnerabilidad;
+import entidades.efectos.ReduccionCuracion;
+import entidades.habilidades.Bastonazo;
+import entidades.habilidades.Habilidad;
+import entidades.habilidades.Objetivo;
+import entidades.pasivas.ElSalvador;
 
 public class Curador extends Personaje {
-    public Curador() { super("CURADOR"); }
 
     private int curacion;
+    private ElSalvador salvador = new ElSalvador();
 
-    public Curador(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int inventario, int habilidades, String atributoDistintivo, int curacion) {
-        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica, inventario, habilidades, atributoDistintivo);
-        this.curacion = curacion;
-        asignarClase("CURADOR");
+    public Curador(String nombre) {
+        super(nombre, "Curación", 45, 10, 90, 2, 4, 2, 4);
+        this.curacion = 10;
+        aplicarEfecto(salvador);
+        setBasico(new Bastonazo());
+        agregarHabilidad(new Habilidad("Curación Divina", 20, Objetivo.UN_ALIADO, 0, 0)
+                .conCuracion(10)
+                .conEfecto(() -> new Invulnerabilidad(1), 100));
+        agregarHabilidad(new Habilidad("Azote del Curandero", 15, Objetivo.UN_ENEMIGO, 0, 4)
+                .conEfecto(() -> new ReduccionCuracion("Azotado", 40, 3), 100));
+        agregarHabilidad(new Habilidad("Segundo Aliento", 5, Objetivo.OTRO_ALIADO, 0, 0)
+                .conMana(10));
+    }
+
+    public ElSalvador getSalvador() {
+        return salvador;
     }
 
     public int getCuracion() {
@@ -17,5 +35,16 @@ public class Curador extends Personaje {
 
     public void setCuracion(int curacion) {
         this.curacion = curacion;
+    }
+
+    @Override
+    protected void subirNivel() {
+        subirNivel(5, 0, 1, 1, 1, 0);
+        curacion++;
+    }
+
+    @Override
+    public int getCapacidadInventario() {
+        return 4;
     }
 }

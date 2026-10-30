@@ -1,21 +1,19 @@
 package entidades.enemigos;
+import entidades.Categoria;
+import entidades.efectos.AtaduraEspectral;
+import entidades.efectos.ReduccionCuracion;
+import entidades.habilidades.Habilidad;
+import entidades.habilidades.Objetivo;
 
 public class Esqueleto extends Enemigo {
-    public Esqueleto() { super("ESQUELETO"); }
 
-    private int vitalidad;
-
-    public Esqueleto(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int experienciaOtorgada, int oroOtorgado, String objetoOtorgado, int vitalidad) {
-        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica, experienciaOtorgada, oroOtorgado, objetoOtorgado);
-        this.vitalidad = vitalidad;
-        asignarTipo("ESQUELETO");
-    }
-
-    public int getVitalidad() {
-        return vitalidad;
-    }
-
-    public void setVitalidad(int vitalidad) {
-        this.vitalidad = vitalidad;
+    public Esqueleto(String nombre) {
+        super(nombre, Categoria.NO_MUERTO, 30, 9, 85, 3, 2, 2, 2, 15, 10);
+        setBasico(new Habilidad("Flechazo", 0, Objetivo.UN_ENEMIGO, 6, 0));
+        agregarHabilidad(new Habilidad("Flechazo Espectral", 0, Objetivo.UN_ENEMIGO, 3, 2)
+                .conEfecto(() -> new AtaduraEspectral(2), 100));
+        agregarHabilidad(new Habilidad("Maldición de la Cripta", 0, Objetivo.UN_ENEMIGO, 0, 0)
+                .conEfecto(() -> new ReduccionCuracion("Maldito", 50, 3), 100));
     }
 }
+

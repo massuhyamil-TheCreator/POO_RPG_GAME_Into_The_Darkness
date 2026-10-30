@@ -1,21 +1,26 @@
 package entidades.enemigos;
+import entidades.Categoria;
+import entidades.Estadistica;
+import entidades.efectos.DanioPorTurno;
+import entidades.efectos.ModificadorEstadistica;
+import entidades.habilidades.Habilidad;
+import entidades.habilidades.Objetivo;
 
 public class Bruja extends Enemigo {
-    public Bruja() { super("BRUJA"); }
 
-    private int vitalidad;
-
-    public Bruja(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int experienciaOtorgada, int oroOtorgado, String objetoOtorgado, int vitalidad) {
-        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica, experienciaOtorgada, oroOtorgado, objetoOtorgado);
-        this.vitalidad = vitalidad;
-        asignarTipo("BRUJA");
-    }
-
-    public int getVitalidad() {
-        return vitalidad;
-    }
-
-    public void setVitalidad(int vitalidad) {
-        this.vitalidad = vitalidad;
+    public Bruja(String nombre) {
+        super(nombre, Categoria.CRIATURA_NOCTURNA, 28, 10, 90, 1, 4, 1, 3, 20, 15);
+        setBasico(new Habilidad("Poción de Envenenamiento", 0, Objetivo.VARIOS_ENEMIGOS, 0, 0)
+                .conCantidadDeObjetivos(2, 2)
+                .conEfecto(() -> DanioPorTurno.veneno(), 100));
+        agregarHabilidad(new Habilidad("Curación Siniestra", 0, Objetivo.ALIADOS_CON_MENOS_VIDA, 0, 0)
+                .conCantidadDeObjetivos(2, 2)
+                .conCuracion(8));
+        agregarHabilidad(new Habilidad("Protección Nocturna", 0, Objetivo.ALIADOS_CON_MENOS_VIDA, 0, 0)
+                .conCantidadDeObjetivos(2, 2)
+                .conEnfriamiento(3)
+                .conEfecto(() -> new ModificadorEstadistica("Protección Nocturna", 2)
+                        .porcentaje(Estadistica.DEFENSA_FISICA, 30)
+                        .porcentaje(Estadistica.DEFENSA_MAGICA, 30), 100));
     }
 }

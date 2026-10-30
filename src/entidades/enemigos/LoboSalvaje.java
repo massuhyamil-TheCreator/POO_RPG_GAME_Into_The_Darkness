@@ -1,21 +1,23 @@
 package entidades.enemigos;
+import entidades.Categoria;
+import entidades.Estadistica;
+import entidades.efectos.ModificadorEstadistica;
+import entidades.efectos.Rabia;
+import entidades.habilidades.Habilidad;
+import entidades.habilidades.Objetivo;
 
 public class LoboSalvaje extends Enemigo {
-    public LoboSalvaje() { super("LOBO_SALVAJE"); }
 
-    private int vitalidad;
-
-    public LoboSalvaje(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int experienciaOtorgada, int oroOtorgado, String objetoOtorgado, int vitalidad) {
-        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica, experienciaOtorgada, oroOtorgado, objetoOtorgado);
-        this.vitalidad = vitalidad;
-        asignarTipo("LOBO_SALVAJE");
-    }
-
-    public int getVitalidad() {
-        return vitalidad;
-    }
-
-    public void setVitalidad(int vitalidad) {
-        this.vitalidad = vitalidad;
+    public LoboSalvaje(String nombre) {
+        super(nombre, Categoria.BESTIA, 28, 14, 85, 3, 0, 1, 1, 12, 5);
+        setBasico(new Habilidad("Mordisco", 0, Objetivo.UN_ENEMIGO, 4, 0));
+        agregarHabilidad(new Habilidad("Garra Rabiosa", 0, Objetivo.UN_ENEMIGO, 5, 0)
+                .conEfecto(() -> new Rabia(2), 100));
+        agregarHabilidad(new Habilidad("Aullido de la Manada", 0, Objetivo.TODOS_LOS_ALIADOS, 0, 0)
+                .conEfecto(() -> new ModificadorEstadistica("Aullido de la Manada", 3)
+                        .sumar(Estadistica.ATAQUE_FISICO, 1)
+                        .sumar(Estadistica.ATAQUE_MAGICO, 1)
+                        .sumar(Estadistica.DEFENSA_FISICA, 1)
+                        .sumar(Estadistica.DEFENSA_MAGICA, 1), 100));
     }
 }

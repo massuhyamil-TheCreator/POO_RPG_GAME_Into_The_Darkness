@@ -5,7 +5,7 @@ public enum TipoNodo {
     Batalla,
     BatallaElite,
     BOSS,
-    Tienda,
+    Tesoro,
     Evento,
     Fogata,
     Herrero

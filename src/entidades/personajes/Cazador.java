@@ -1,14 +1,28 @@
 package entidades.personajes;
+import entidades.Estadistica;
+import entidades.efectos.DanioPorTurno;
+import entidades.efectos.ModificadorEstadistica;
+import entidades.habilidades.BombaDeHumo;
+import entidades.habilidades.CrucifijoConAjo;
+import entidades.habilidades.Habilidad;
+import entidades.habilidades.Objetivo;
+import entidades.pasivas.VigilanteDeLaNoche;
 
 public class Cazador extends Personaje {
-    public Cazador() { super("CAZADOR"); }
 
     private int astucia;
 
-    public Cazador(String nombre, String categoria, int puntosDeSalud, int puntosDeSaludMaximos, int recurso, int recursoMaximo, int velocidad, int precision, int nivel, int experiencia, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica, int inventario, int habilidades, String atributoDistintivo, int astucia) {
-        super(nombre, categoria, puntosDeSalud, puntosDeSaludMaximos, recurso, recursoMaximo, velocidad, precision, nivel, experiencia, ataqueFisico, ataqueMagico, defensaFisica, defensaMagica, inventario, habilidades, atributoDistintivo);
-        this.astucia = astucia;
-        asignarClase("CAZADOR");
+    public Cazador(String nombre) {
+        super(nombre, "Astucia", 50, 11, 90, 4, 1, 3, 2);
+        this.astucia = 10;
+        aplicarEfecto(new VigilanteDeLaNoche());
+        setBasico(new Habilidad("Escopetazo", 0, Objetivo.UN_ENEMIGO, 7, 0));
+        agregarHabilidad(new BombaDeHumo());
+        agregarHabilidad(new Habilidad("Trampa para Bobos", 15, Objetivo.UN_ENEMIGO, 4, 0)
+                .conEfecto(() -> new ModificadorEstadistica("Atrapado", 2)
+                        .porcentaje(Estadistica.VELOCIDAD, -30), 100)
+                .conEfecto(() -> new DanioPorTurno("Sangrado", 2, 1), 100));
+        agregarHabilidad(new CrucifijoConAjo());
     }
 
     public int getAstucia() {
@@ -17,5 +31,16 @@ public class Cazador extends Personaje {
 
     public void setAstucia(int astucia) {
         this.astucia = astucia;
+    }
+
+    @Override
+    protected void subirNivel() {
+        subirNivel(5, 2, 0, 1, 0, 0);
+        astucia++;
+    }
+
+    @Override
+    public int getCapacidadInventario() {
+        return 3;
     }
 }
