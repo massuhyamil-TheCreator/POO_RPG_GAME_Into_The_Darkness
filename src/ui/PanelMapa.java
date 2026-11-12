@@ -8,6 +8,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import dto.MapaDTO;
 import dto.NodoDTO;
@@ -28,6 +29,12 @@ public class PanelMapa extends JPanel {
     private static final BufferedImage SHEET_INDICADORES = cargarImagen("sheet_indicadores_nodos.png");
     private static final BufferedImage SHEET_CONEXIONES = cargarImagen("sheet_conexiones.png");
     private static final BufferedImage SHEET_PUERTA = cargarImagen("sheet_puerta_jefe.png");
+
+    private static final Map<String, String> ICONO_POR_TIPO = Map.of(
+            "Batalla", "combate",
+            "BatallaElite", "elite",
+            "Fogata", "descanso",
+            "INICIO", "santuario");
 
     private MapaDTO mapa;
     // quien usa el panel decide qué pasa al elegir un nodo (la partida avanza, el mapa se mueve, etc.)
@@ -110,13 +117,7 @@ public class PanelMapa extends JPanel {
     }
 
     private String piezaIcono(String tipo) {
-        switch (tipo) {
-            case "Batalla":      return "combate";
-            case "BatallaElite": return "elite";
-            case "Fogata":       return "descanso";
-            case "INICIO":       return "santuario";
-            default:             return null;   // BOSS usa la puerta aparte
-        }
+        return ICONO_POR_TIPO.get(tipo);
     }
 
     private String estadoConexion(NodoDTO n, NodoDTO s, NodoDTO actual) {

@@ -10,6 +10,7 @@ import dto.PartidaDTO;
 import dto.ResultadoFinal;
 import dto.ResumenDeBatalla;
 import entidades.personajes.Personaje;
+import excepciones.PartidaException;
 import mapa.Mapa;
 import mapa.Nodo;
 import objetos.Inventario;
@@ -18,7 +19,6 @@ import partida.CreadorDePersonajes;
 import partida.EstadoPartida;
 import partida.GuardadoDePartidas;
 import partida.Partida;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,9 +27,19 @@ import java.util.List;
 // Él habla con el modelo y devuelve DTOs: ninguna pantalla crea ni modifica objetos del modelo.
 public class ControladorJuego {
 
+    private static ControladorJuego instancia;
+
     private Partida partida;
     private int ranura;
     private ControladorCombate combate;
+
+    private ControladorJuego() {
+    }
+
+    public static ControladorJuego getInstancia() {
+        if (instancia == null) instancia = new ControladorJuego();
+        return instancia;
+    }
 
     // ---- Ranuras de guardado ----
 
@@ -41,18 +51,18 @@ public class ControladorJuego {
         return GuardadoDePartidas.describir(ranura);
     }
 
-    public void borrarPartida(int ranura) throws IOException {
+    public void borrarPartida(int ranura) throws PartidaException {
         GuardadoDePartidas.borrar(ranura);
     }
 
     // arma una partida con esas clases de personaje, la guarda en la ranura y queda como la partida actual
-    public void nuevaPartida(int ranura, List<String> clases) throws IOException {
+    public void nuevaPartida(int ranura, List<String> clases) throws PartidaException {
         Partida nueva = new Partida(CreadorDePersonajes.crearParty(clases));
         GuardadoDePartidas.guardar(nueva, ranura);
         adoptar(nueva, ranura);
     }
 
-    public void cargarPartida(int ranura) throws IOException {
+    public void cargarPartida(int ranura) throws PartidaException {
         adoptar(GuardadoDePartidas.cargar(ranura), ranura);
     }
 
@@ -63,7 +73,7 @@ public class ControladorJuego {
     }
 
     // guarda la partida actual en su ranura
-    public void guardar() throws IOException {
+    public void guardar() throws PartidaException {
         GuardadoDePartidas.guardar(partida, ranura);
     }
 

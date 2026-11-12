@@ -4,7 +4,9 @@ import entidades.efectos.Efecto;
 import entidades.habilidades.Habilidad;
 import objetos.Item;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public abstract class Entidad {
@@ -16,15 +18,10 @@ public abstract class Entidad {
     private int puntosDeSaludMaximos;
     private int recurso;
     private int recursoMaximo;
-    private int precision;
     private int nivel;
     private int experiencia;
     private int puntosDeSalud;
-    private int velocidad;
-    private int ataqueFisico;
-    private int ataqueMagico;
-    private int defensaFisica;
-    private int defensaMagica;
+    private final Map<Estadistica, Integer> estadisticasBase = new EnumMap<>(Estadistica.class);
     private Habilidad basico;
     private List<Habilidad> habilidades = new ArrayList<>();
     private List<Efecto> efectos = new ArrayList<>();
@@ -37,29 +34,21 @@ public abstract class Entidad {
         this.puntosDeSaludMaximos = puntosDeSaludMaximos;
         this.recurso = recurso;
         this.recursoMaximo = recursoMaximo;
-        this.velocidad = velocidad;
-        this.precision = precision;
         this.nivel = nivel;
         this.experiencia = experiencia;
-        this.ataqueFisico = ataqueFisico;
-        this.ataqueMagico = ataqueMagico;
-        this.defensaFisica = defensaFisica;
-        this.defensaMagica = defensaMagica;
+        estadisticasBase.put(Estadistica.ATAQUE_FISICO, ataqueFisico);
+        estadisticasBase.put(Estadistica.ATAQUE_MAGICO, ataqueMagico);
+        estadisticasBase.put(Estadistica.DEFENSA_FISICA, defensaFisica);
+        estadisticasBase.put(Estadistica.DEFENSA_MAGICA, defensaMagica);
+        estadisticasBase.put(Estadistica.VELOCIDAD, velocidad);
+        estadisticasBase.put(Estadistica.PRECISION, precision);
+        estadisticasBase.put(Estadistica.CRITICO, PROBABILIDAD_CRITICO_BASE);
     }
 
     // ---- Estadísticas: valor base + lo que modifiquen los efectos ----
 
     protected int getEstadisticaBase(Estadistica estadistica) {
-        switch (estadistica) {
-            case ATAQUE_FISICO: return ataqueFisico;
-            case ATAQUE_MAGICO: return ataqueMagico;
-            case DEFENSA_FISICA: return defensaFisica;
-            case DEFENSA_MAGICA: return defensaMagica;
-            case VELOCIDAD: return velocidad;
-            case PRECISION: return precision;
-            case CRITICO: return PROBABILIDAD_CRITICO_BASE;
-            default: return 0;
-        }
+        return estadisticasBase.getOrDefault(estadistica, 0);
     }
 
     public int getEstadistica(Estadistica estadistica) {
@@ -123,11 +112,11 @@ public abstract class Entidad {
         this.nivel++;
         this.puntosDeSaludMaximos += vida;
         this.puntosDeSalud += vida;
-        this.ataqueFisico += ataqueFisico;
-        this.ataqueMagico += ataqueMagico;
-        this.defensaFisica += defensaFisica;
-        this.defensaMagica += defensaMagica;
-        this.velocidad += velocidad;
+        estadisticasBase.merge(Estadistica.ATAQUE_FISICO, ataqueFisico, Integer::sum);
+        estadisticasBase.merge(Estadistica.ATAQUE_MAGICO, ataqueMagico, Integer::sum);
+        estadisticasBase.merge(Estadistica.DEFENSA_FISICA, defensaFisica, Integer::sum);
+        estadisticasBase.merge(Estadistica.DEFENSA_MAGICA, defensaMagica, Integer::sum);
+        estadisticasBase.merge(Estadistica.VELOCIDAD, velocidad, Integer::sum);
     }
 
     protected void setExperiencia(int experiencia) {

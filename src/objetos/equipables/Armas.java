@@ -1,4 +1,5 @@
 package objetos.equipables;
+import entidades.Estadistica;
 import objetos.Inventario;
 
 public class Armas extends Equipables {
@@ -46,6 +47,12 @@ public class Armas extends Equipables {
 
     public int getDanioMagico() {
         return danioMagico;
+    }
+
+    public int bonificacion(Estadistica estadistica) {
+        if (estadistica == Estadistica.ATAQUE_FISICO) return danioFisico;
+        if (estadistica == Estadistica.ATAQUE_MAGICO) return danioMagico;
+        return 0;
     }
 
 

@@ -23,7 +23,7 @@ public class VentanaPrincipal extends JFrame implements Navegador {
     private JPanel pantallaFinal;
     private Timer fundidoEnCurso;
     // el controlador de la partida: lo comparten todas las pantallas
-    private final ControladorJuego juego = new ControladorJuego();
+    private final ControladorJuego juego = ControladorJuego.getInstancia();
     public VentanaPrincipal() {
         setTitle("Into The Darkness");
         setSize(1280, 720);

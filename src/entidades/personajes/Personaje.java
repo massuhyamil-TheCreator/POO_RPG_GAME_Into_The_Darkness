@@ -95,11 +95,8 @@ public abstract class Personaje extends Entidad {
     @Override
     protected int getEstadisticaBase(Estadistica estadistica) {
         int valor = super.getEstadisticaBase(estadistica);
-        switch (estadistica) {
-            case ATAQUE_FISICO: return valor + (arma == null ? 0 : arma.getDanioFisico());
-            case ATAQUE_MAGICO: return valor + (arma == null ? 0 : arma.getDanioMagico());
-            default: return valor;
-        }
+        if (arma == null) return valor;
+        return valor + arma.bonificacion(estadistica);
     }
 
     public Armas getArma() { return arma; }

@@ -19,6 +19,7 @@ import javax.imageio.ImageIO;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import controlador.ControladorJuego;
+import excepciones.PartidaException;
 
 public class PantallaPartidas extends JPanel {
     private static final String[] NUMEROS_ROMANOS = {"I", "II", "III"};
@@ -162,8 +163,8 @@ public class PantallaPartidas extends JPanel {
         try {
             juego.cargarPartida(ranura);
             ventana.jugar();
-        } catch (IOException | RuntimeException e) {
-            Dialogo.avisar(this, "No se pudo cargar", "El archivo de la ranura " + ranura + " está dañado: " + e.getMessage());
+        } catch (PartidaException e) {
+            Dialogo.avisar(this, "No se pudo cargar", e.getMessage());
         }
     }
 
@@ -173,7 +174,7 @@ public class PantallaPartidas extends JPanel {
         if (confirmar != 0) return;
         try {
             juego.borrarPartida(ranura);
-        } catch (IOException e) {
+        } catch (PartidaException e) {
             Dialogo.avisar(this, "No se pudo borrar", e.getMessage());
         }
         refrescar();

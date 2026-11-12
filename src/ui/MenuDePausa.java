@@ -4,8 +4,8 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import controlador.ControladorJuego;
+import excepciones.PartidaException;
 
 // La pausa (botón Pausa o tecla Esc) del mapa, la preparación y el combate.
 // Todo se guarda en la ranura de la partida.
@@ -41,7 +41,7 @@ public class MenuDePausa {
         try {
             juego.guardar();
             return true;
-        } catch (IOException | RuntimeException e) {
+        } catch (PartidaException e) {
             Dialogo.avisar(pantalla, "No se pudo guardar", e.getMessage());
             return false;
         }

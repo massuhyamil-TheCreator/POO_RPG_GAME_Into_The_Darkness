@@ -4,7 +4,10 @@ import objetos.consumibles.Consumibles;
 import objetos.consumibles.PocionCuracion;
 import objetos.consumibles.PocionMana;
 import objetos.equipables.Armas;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.function.Supplier;
 
 public class Catalogo {
 
@@ -18,6 +21,21 @@ public class Catalogo {
     public static final int ESPADA_LARGA = 6;
     public static final int BACULO_OSCURO = 7;
     public static final int ARCO_DE_CAZA = 8;
+
+    private static final Map<Integer, Supplier<Armas>> ARMAS = new HashMap<>();
+    private static final Map<Integer, Supplier<Consumibles>> CONSUMIBLES = new HashMap<>();
+
+    static {
+        ARMAS.put(ESPADA_LARGA, () -> new Armas(ESPADA_LARGA, "Espada larga", "Una espada pesada", 100, "Espada", 2, 0));
+        ARMAS.put(BACULO_OSCURO, () -> new Armas(BACULO_OSCURO, "Báculo oscuro", "Canaliza magia", 120, "Baculo", 0, 3));
+        ARMAS.put(ARCO_DE_CAZA, () -> new Armas(ARCO_DE_CAZA, "Arco de caza", "Liviano y preciso", 90, "Arco", 2, 1));
+
+        CONSUMIBLES.put(POCION_VIDA_CHICA, () -> new PocionCuracion(POCION_VIDA_CHICA, "Poción de vida chica", "Cura 15 de vida", 20, 1, 15));
+        CONSUMIBLES.put(POCION_VIDA_GRANDE, () -> new PocionCuracion(POCION_VIDA_GRANDE, "Poción de vida grande", "Cura 35 de vida", 50, 2, 35));
+        CONSUMIBLES.put(POCION_MANA_CHICA, () -> new PocionMana(POCION_MANA_CHICA, "Poción de maná chica", "Da 20 de maná", 20, 1, 20));
+        CONSUMIBLES.put(POCION_MANA_GRANDE, () -> new PocionMana(POCION_MANA_GRANDE, "Poción de maná grande", "Da 50 de maná", 50, 2, 50));
+        CONSUMIBLES.put(ANTIDOTO, () -> new Antidoto(ANTIDOTO, "Antídoto", "Cura el veneno y da inmunidad por 2 turnos", 15));
+    }
 
     // los que se repiten salen más seguido
     private static final int[] BOTIN = {
@@ -35,28 +53,20 @@ public class Catalogo {
     }
 
     private static boolean esArma(int id) {
-        return id == ESPADA_LARGA || id == BACULO_OSCURO || id == ARCO_DE_CAZA;
+        return ARMAS.containsKey(id);
     }
 
     // con tipo exacto: así quien necesita un arma no tiene que castear
     public static Armas crearArma(int id) {
-        switch (id) {
-            case ESPADA_LARGA: return new Armas(id, "Espada larga", "Una espada pesada", 100, "Espada", 2, 0);
-            case BACULO_OSCURO: return new Armas(id, "Báculo oscuro", "Canaliza magia", 120, "Baculo", 0, 3);
-            case ARCO_DE_CAZA: return new Armas(id, "Arco de caza", "Liviano y preciso", 90, "Arco", 2, 1);
-            default: throw new IllegalArgumentException("No existe el arma " + id);
-        }
+        Supplier<Armas> arma = ARMAS.get(id);
+        if (arma == null) throw new IllegalArgumentException("No existe el arma " + id);
+        return arma.get();
     }
 
     public static Consumibles crearConsumible(int id) {
-        switch (id) {
-            case POCION_VIDA_CHICA: return new PocionCuracion(id, "Poción de vida chica", "Cura 15 de vida", 20, 1, 15);
-            case POCION_VIDA_GRANDE: return new PocionCuracion(id, "Poción de vida grande", "Cura 35 de vida", 50, 2, 35);
-            case POCION_MANA_CHICA: return new PocionMana(id, "Poción de maná chica", "Da 20 de maná", 20, 1, 20);
-            case POCION_MANA_GRANDE: return new PocionMana(id, "Poción de maná grande", "Da 50 de maná", 50, 2, 50);
-            case ANTIDOTO: return new Antidoto(id, "Antídoto", "Cura el veneno y da inmunidad por 2 turnos", 15);
-            default: throw new IllegalArgumentException("No existe el consumible " + id);
-        }
+        Supplier<Consumibles> consumible = CONSUMIBLES.get(id);
+        if (consumible == null) throw new IllegalArgumentException("No existe el consumible " + id);
+        return consumible.get();
     }
 
     public static Item botinAlAzar() {

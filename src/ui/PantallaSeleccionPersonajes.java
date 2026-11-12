@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import controlador.ControladorJuego;
+import excepciones.PartidaException;
 
 // Partida nueva: se eligen los 3 personajes con su splash art, iconos y ventana de stats.
 // (merge) Ahora recibe la ranura y al tocar Continuar arma la Partida, la guarda en esa ranura
@@ -283,7 +284,7 @@ public class PantallaSeleccionPersonajes extends JPanel {
     private void comenzar(java.util.List<String> clasesElegidas) {
         try {
             juego.nuevaPartida(ranura, clasesElegidas);
-        } catch (IOException e) {
+        } catch (PartidaException e) {
             Dialogo.avisar(this, "No se pudo guardar", e.getMessage());
             return;
         }

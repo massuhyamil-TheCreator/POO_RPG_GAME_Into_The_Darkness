@@ -10,9 +10,9 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.io.IOException;
 import controlador.ControladorJuego;
 import dto.ResultadoFinal;
+import excepciones.PartidaException;
 
 // Cuando la partida termina: Victoria (cayó el jefe) o Game Over (cayó toda la party).
 // Muestra cómo quedó la party; con Game Over se puede volver al último guardado de la ranura.
@@ -61,7 +61,7 @@ public class PantallaFinal extends JPanel {
             try {
                 juego.cargarPartida(juego.getRanura());
                 ventana.jugar();
-            } catch (IOException | RuntimeException error) {
+            } catch (PartidaException error) {
                 Dialogo.avisar(this, "No se pudo cargar", error.getMessage());
             }
         });

@@ -13,9 +13,10 @@ efectos de estado y guardado de la partida en archivos.
 | Capa | Paquete | Qué hace |
 |---|---|---|
 | Vista | `ui` | Pantallas Swing. Solo muestran DTOs y le piden cosas a los controladores. No importan nada del modelo. |
-| Controlador | `controlador` | `ControladorJuego` (partida, mapa, preparación, guardado) y `ControladorCombate` (la pelea). Reciben lo que pide la vista, hablan con el modelo y devuelven DTOs. |
+| Controlador | `controlador` | `ControladorJuego` (Singleton: partida, mapa, preparación, guardado) y `ControladorCombate` (la pelea). Reciben lo que pide la vista, hablan con el modelo y devuelven DTOs. |
 | DTO | `dto` | Datos listos para mostrar (`EntidadDTO`, `CombateDTO`, `MapaDTO`...). Solo dependen de `java.util`. |
 | Modelo | `combate`, `partida`, `entidades`, `objetos`, `mapa` | La lógica del juego. No conoce a la vista ni a los controladores. |
+| Excepciones | `excepciones` | `PartidaException` (chequeada) y `PartidaDanadaException`: errores al guardar, cargar o borrar partidas. Las usan el modelo, el controlador y la vista. |
 
 Flujo de una acción: botón (`ui`) → `ControladorCombate.defender()` → `Batalla.defender()` → el controlador arma un `CombateDTO` → la pantalla se vuelve a dibujar.
 
@@ -28,4 +29,4 @@ Flujo de una acción: botón (`ui`) → `ControladorCombate.defender()` → `Bat
 - **Pure Fabrication**: `Conversor` (arma los DTOs) y `SerializadorDePartida`.
 
 ## Tamaño
-123 archivos .java, 8389 líneas: controlador (3 archivos), dto (12), ui (16), combate (7), partida (9), entidades (63), objetos (9), mapa (4).
+125 archivos .java, 8450 líneas: controlador (3 archivos), dto (12), ui (16), combate (7), partida (9), entidades (63), objetos (9), mapa (4), excepciones (2).
