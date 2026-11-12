@@ -1,4 +1,4 @@
-package mapa;
+package ui;
 
 import java.awt.Rectangle;
 import java.io.BufferedReader;

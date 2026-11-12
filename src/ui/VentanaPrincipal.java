@@ -9,9 +9,9 @@ import javax.swing.JLayeredPane;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import javax.swing.Timer;
-import partida.Partida;
+import controlador.ControladorJuego;
 
-public class VentanaPrincipal extends JFrame {
+public class VentanaPrincipal extends JFrame implements Navegador {
     private CardLayout cardLayout;
     private PanelFundido panelFundido;
     private JPanel panelContenedor;
@@ -22,6 +22,8 @@ public class VentanaPrincipal extends JFrame {
     private JPanel pantallaCombate;
     private JPanel pantallaFinal;
     private Timer fundidoEnCurso;
+    // el controlador de la partida: lo comparten todas las pantallas
+    private final ControladorJuego juego = new ControladorJuego();
     public VentanaPrincipal() {
         setTitle("Into The Darkness");
         setSize(1280, 720);
@@ -33,7 +35,7 @@ public class VentanaPrincipal extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         cardLayout = new CardLayout();
         panelContenedor = new JPanel(cardLayout);
-        pantallaPartidas = new PantallaPartidas(this);
+        pantallaPartidas = new PantallaPartidas(this, juego);
         panelContenedor.add(new PantallaMenu(this), "menu");
         panelContenedor.add(pantallaPartidas, "partidas");
         panelContenedor.setBounds(0, 0, getWidth(), getHeight());
@@ -68,26 +70,24 @@ public class VentanaPrincipal extends JFrame {
 
     // partida nueva en una ranura vacía: la pantalla se arma de cero cada vez
     public void elegirPersonajes(int ranura) {
-        // (merge) se usa la pantalla con splash arts e iconos; PantallaPersonajes (la versión simple)
-        // queda en el proyecto por si hace falta volver a ella
-        pantallaPersonajes = reemplazar(pantallaPersonajes, new PantallaSeleccionPersonajes(this, ranura), "personajes");
+        pantallaPersonajes = reemplazar(pantallaPersonajes, new PantallaSeleccionPersonajes(this, juego, ranura), "personajes");
         cambiarPantallaConFundido("personajes");
     }
 
     // abre el mapa de una partida nueva o cargada; se guarda en la misma ranura
-    public void jugar(Partida partida, int ranura) {
-        pantallaMapa = (PantallaMapa) reemplazar(pantallaMapa, new PantallaMapa(this, partida, ranura), "mapa");
+    public void jugar() {
+        pantallaMapa = (PantallaMapa) reemplazar(pantallaMapa, new PantallaMapa(this, juego), "mapa");
         cambiarPantallaConFundido("mapa");
     }
 
-    // antes de cada pelea: elegir arma, armadura y objetos
-    public void preparar(Partida partida, int ranura) {
-        pantallaPreparacion = reemplazar(pantallaPreparacion, new PantallaPreparacion(this, partida, ranura), "preparacion");
+    // antes de cada pelea: elegir arma y objetos
+    public void preparar() {
+        pantallaPreparacion = reemplazar(pantallaPreparacion, new PantallaPreparacion(this, juego), "preparacion");
         cambiarPantallaConFundido("preparacion");
     }
 
-    public void combatir(Partida partida, int ranura) {
-        pantallaCombate = reemplazar(pantallaCombate, new PantallaCombate(this, partida, ranura), "combate");
+    public void combatir() {
+        pantallaCombate = reemplazar(pantallaCombate, new PantallaCombate(this, juego), "combate");
         cambiarPantallaConFundido("combate");
     }
 
@@ -98,8 +98,8 @@ public class VentanaPrincipal extends JFrame {
     }
 
     // Victoria o Game Over
-    public void finalizar(Partida partida, int ranura) {
-        pantallaFinal = reemplazar(pantallaFinal, new PantallaFinal(this, partida, ranura), "final");
+    public void finalizar() {
+        pantallaFinal = reemplazar(pantallaFinal, new PantallaFinal(this, juego), "final");
         cambiarPantallaConFundido("final");
     }
 

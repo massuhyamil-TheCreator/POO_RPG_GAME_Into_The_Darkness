@@ -18,8 +18,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import partida.GuardadoDePartidas;
-import partida.Partida;
+import controlador.ControladorJuego;
 
 public class PantallaPartidas extends JPanel {
     private static final String[] NUMEROS_ROMANOS = {"I", "II", "III"};
@@ -35,7 +34,8 @@ public class PantallaPartidas extends JPanel {
     private Image botonVolverNormal;
     private Image botonVolverSeleccionado;
     private Image botonVolverPresionado;
-    private VentanaPrincipal ventana;
+    private Navegador ventana;
+    private ControladorJuego juego;
 
     private BotonRanura botonSlot1;
     private BotonRanura botonSlot2;
@@ -47,8 +47,9 @@ public class PantallaPartidas extends JPanel {
     private int anchoVolver = 220;
     private int altoVolver = 50;
 
-    public PantallaPartidas(VentanaPrincipal ventana) {
+    public PantallaPartidas(Navegador ventana, ControladorJuego juego) {
         this.ventana = ventana;
+        this.juego = juego;
 
         ImageIcon icon = new ImageIcon("src/ui/imagenes/Into_The_Darkness_PlayMenu.png");
         fondo = icon.getImage();
@@ -145,11 +146,11 @@ public class PantallaPartidas extends JPanel {
 
     private void elegirRanura(int ranura) {
         String titulo = "Ranura " + ranura;
-        if (!GuardadoDePartidas.hayPartida(ranura)) {
+        if (!juego.hayPartida(ranura)) {
             ventana.elegirPersonajes(ranura);
             return;
         }
-        int opcion = Dialogo.elegir(this, titulo, GuardadoDePartidas.describir(ranura), "Continuar", "Borrar", "Volver");
+        int opcion = Dialogo.elegir(this, titulo, juego.describirRanura(ranura), "Continuar", "Borrar", "Volver");
         if (opcion == 0) {
             continuar(ranura);
         } else if (opcion == 1) {
@@ -159,9 +160,8 @@ public class PantallaPartidas extends JPanel {
 
     private void continuar(int ranura) {
         try {
-            Partida partida = GuardadoDePartidas.cargar(ranura);
-            ventana.jugar(partida, ranura);
-
+            juego.cargarPartida(ranura);
+            ventana.jugar();
         } catch (IOException | RuntimeException e) {
             Dialogo.avisar(this, "No se pudo cargar", "El archivo de la ranura " + ranura + " está dañado: " + e.getMessage());
         }
@@ -172,7 +172,7 @@ public class PantallaPartidas extends JPanel {
                 "¿Seguro que querés borrar la partida de la ranura " + ranura + "? No se puede deshacer.", "Borrar", "Cancelar");
         if (confirmar != 0) return;
         try {
-            GuardadoDePartidas.borrar(ranura);
+            juego.borrarPartida(ranura);
         } catch (IOException e) {
             Dialogo.avisar(this, "No se pudo borrar", e.getMessage());
         }
@@ -202,12 +202,12 @@ public class PantallaPartidas extends JPanel {
 
         // se lee del disco acá y no al dibujar, que pasa muchas veces
         void actualizar() {
-            ocupada = GuardadoDePartidas.hayPartida(ranura);
+            ocupada = juego.hayPartida(ranura);
             grupo = "";
             detalle = "";
             if (ocupada) {
                 // "Mago nv 1, Guerrero nv 1, Curador nv 1 · piso 2 · 29/10/2026 18:40"
-                String descripcion = GuardadoDePartidas.describir(ranura);
+                String descripcion = juego.describirRanura(ranura);
                 int corte = descripcion.indexOf(" · ");
                 grupo = corte < 0 ? descripcion : descripcion.substring(0, corte);
                 detalle = corte < 0 ? "" : descripcion.substring(corte + 3);

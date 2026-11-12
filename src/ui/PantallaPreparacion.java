@@ -15,26 +15,22 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import combate.PartyAliada;
-import entidades.enemigos.Enemigo;
-import entidades.personajes.Personaje;
-import objetos.consumibles.Consumibles;
-import objetos.equipables.Armaduras;
-import objetos.equipables.Armas;
-import partida.Partida;
+import controlador.ControladorJuego;
+import dto.EntidadDTO;
+import dto.ItemDTO;
+import dto.PartidaDTO;
 
-// Antes de cada pelea: arma, armadura y objetos para cada personaje en pie, de a uno.
+// Antes de cada pelea: arma y objetos para cada personaje en pie, de a uno.
 // Cuando la mochila se llena, pasa sola al siguiente personaje (o empieza la pelea si era el último).
 public class PantallaPreparacion extends JPanel {
     private static final int ANCHO_BOTON = 236;
     private static final int ALTO_BOTON = 54;
     private static final int ANCHO_CONTENIDO = 1200;
 
-    private VentanaPrincipal ventana;
-    private Partida partida;
-    private int ranura;
+    private Navegador ventana;
+    private ControladorJuego juego;
     private Image fondo;
-    private List<Personaje> enPie = new ArrayList<>();
+    private List<EntidadDTO> enPie = new ArrayList<>();
     private int indice;
 
     private JLabel titulo;
@@ -45,31 +41,23 @@ public class PantallaPreparacion extends JPanel {
     private JPanel cajaDatos;
     private JLabel tituloArma;
     private JPanel armas;
-    private JLabel tituloArmadura;
-    private JPanel armaduras;
     private JLabel tituloObjetos;
     private JPanel objetos;
     private JButton botonPausa;
     private JButton botonAnterior;
     private JButton botonSiguiente;
 
-    public PantallaPreparacion(VentanaPrincipal ventana, Partida partida, int ranura) {
+    public PantallaPreparacion(Navegador ventana, ControladorJuego juego) {
         this.ventana = ventana;
-        this.partida = partida;
-        this.ranura = ranura;
+        this.juego = juego;
         fondo = new ImageIcon("src/ui/imagenes/Into_The_Darkness_PlayMenu.png").getImage();
         setLayout(null);
-        partida.tomarMensajes(); // el "¡Aparecen enemigos!" ya se muestra arriba
+        juego.tomarMensajes(); // el "¡Aparecen enemigos!" ya se muestra arriba
 
-        for (Personaje p : partida.getParty().getMiembrosJugador()) {
-            if (p.estaVivo()) enPie.add(p);
-        }
+        enPie.addAll(juego.personajesEnPie());
 
         titulo = etiqueta("¡Combate!  ·  Preparen el equipo", 38f, Recursos.DORADO, SwingConstants.CENTER);
-        List<String> nombres = new ArrayList<>();
-        for (Enemigo enemigo : partida.getEnemigosPendientes().getMiembrosEnemigos()) {
-            nombres.add(enemigo.getNombre() + " (" + enemigo.getPuntosDeSalud() + " HP)");
-        }
+        List<String> nombres = juego.descripcionDeLosEnemigos();
         enemigos = etiqueta("Enemigos: " + String.join(",  ", nombres), 22f, Color.WHITE, SwingConstants.CENTER);
         progreso = etiqueta("", 22f, Recursos.TEXTO_SECUNDARIO, SwingConstants.LEFT);
 
@@ -81,15 +69,13 @@ public class PantallaPreparacion extends JPanel {
 
         tituloArma = etiqueta("", 24f, Recursos.DORADO, SwingConstants.LEFT);
         armas = fila();
-        tituloArmadura = etiqueta("", 24f, Recursos.DORADO, SwingConstants.LEFT);
-        armaduras = fila();
         tituloObjetos = etiqueta("", 24f, Recursos.DORADO, SwingConstants.LEFT);
         objetos = fila();
 
         botonPausa = Recursos.botonPlaca("Pausa", 180, 58, 22f);
-        botonPausa.addActionListener(e -> MenuDePausa.abrir(ventana, this, partida, ranura));
+        botonPausa.addActionListener(e -> MenuDePausa.abrir(ventana, this, juego));
         add(botonPausa);
-        MenuDePausa.conEscape(this, () -> MenuDePausa.abrir(ventana, this, partida, ranura));
+        MenuDePausa.conEscape(this, () -> MenuDePausa.abrir(ventana, this, juego));
 
         botonAnterior = Recursos.botonPlaca("Anterior", 180, 58, 22f);
         botonAnterior.addActionListener(e -> {
@@ -112,7 +98,7 @@ public class PantallaPreparacion extends JPanel {
         mostrarPersonaje();
     }
 
-    private Personaje actual() {
+    private EntidadDTO actual() {
         return enPie.get(indice);
     }
 
@@ -121,47 +107,44 @@ public class PantallaPreparacion extends JPanel {
             indice++;
             mostrarPersonaje();
         } else {
-            partida.comenzarBatalla();
-            ventana.combatir(partida, ranura);
+            juego.comenzarBatalla();
+            ventana.combatir();
         }
     }
 
     // ---- Lo que se toca ----
 
-    private void equiparArma(Armas arma) {
-        partida.getParty().equiparArma(actual(), arma);
+    private void equiparArma(ItemDTO arma) {
+        juego.equiparArma(actual().getId(), arma.getIndice());
         mostrarPersonaje();
     }
 
-    private void equiparArmadura(Armaduras armadura) {
-        partida.getParty().equiparArmadura(actual(), armadura);
-        mostrarPersonaje();
-    }
-
-    private void darObjeto(Consumibles consumible) {
-        Personaje p = actual();
-        if (!partida.getParty().darConsumible(p, consumible)) {
+    private void darObjeto(ItemDTO consumible) {
+        EntidadDTO p = actual();
+        if (!juego.darConsumible(p.getId(), consumible.getIndice())) {
             Dialogo.avisar(this, "No entra", consumible.getNombre() + " ocupa " + consumible.getEspacios()
                     + " espacio/s y a " + p.getNombre() + " le quedan " + (p.getCapacidadInventario() - p.getEspaciosUsados()) + ".");
             return;
         }
-        // mochila llena: se pasa solo al siguiente
-        if (p.mochilaLlena()) siguiente();
+        // mochila llena: se pasa solo al siguiente (se vuelve a pedir el personaje: su mochila cambió)
+        enPie = juego.personajesEnPie();
+        if (actual().isMochilaLlena()) siguiente();
         else mostrarPersonaje();
     }
 
     private void vaciarMochila() {
-        partida.getParty().vaciarMochila(actual());
+        juego.vaciarMochila(actual().getId());
         mostrarPersonaje();
     }
 
     // ---- Mostrar ----
 
     private void mostrarPersonaje() {
-        Personaje p = actual();
-        PartyAliada party = partida.getParty();
+        enPie = juego.personajesEnPie();   // se vuelve a pedir: cambia con cada objeto o arma que se reparte
+        EntidadDTO p = actual();
+        PartidaDTO situacion = juego.getPartida();
         progreso.setText("Personaje " + (indice + 1) + " de " + enPie.size()
-                + (enPie.size() < party.getMiembrosJugador().size() ? "   (los caídos no pelean; reviven en una fogata)" : ""));
+                + (enPie.size() < situacion.getParty().size() ? "   (los caídos no pelean; reviven en una fogata)" : ""));
         tarjeta.mostrar(p, "Mochila " + p.getEspaciosUsados() + " / " + p.getCapacidadInventario());
 
         StringBuilder texto = new StringBuilder();
@@ -170,38 +153,29 @@ public class PantallaPreparacion extends JPanel {
         texto.append("Velocidad ").append(p.getVelocidad()).append("   ·   Precisión ").append(p.getPrecision()).append("\n\n");
         texto.append("En la mochila:");
         if (p.getMochila().isEmpty()) texto.append(" nada");
-        for (Consumibles c : p.getMochila()) texto.append("\n   •  ").append(c.getNombre());
+        for (String c : p.getMochila()) texto.append("\n   •  ").append(c);
         datos.setText(texto.toString());
         datos.setCaretPosition(0);
 
-        tituloArma.setText("Arma: " + Recursos.describir(p.getArma()));
+        tituloArma.setText("Arma: " + p.getArma());
         armas.removeAll();
-        for (Armas arma : party.getInventario().getArmas()) {
-            JButton boton = boton(arma.getNombre(), Recursos.describir(arma) + " — " + arma.getDescripcion());
+        for (ItemDTO arma : situacion.getArmas()) {
+            JButton boton = boton(arma.getNombre(), arma.getResumen() + " — " + arma.getDescripcion());
             boton.addActionListener(e -> equiparArma(arma));
             armas.add(boton);
         }
         if (armas.getComponentCount() == 0) armas.add(nota("No hay otras armas en el inventario."));
 
-        tituloArmadura.setText("Armadura: " + Recursos.describir(p.getArmadura()));
-        armaduras.removeAll();
-        for (Armaduras armadura : party.getInventario().getArmaduras()) {
-            JButton boton = boton(armadura.getNombre(), Recursos.describir(armadura) + " — " + armadura.getDescripcion());
-            boton.addActionListener(e -> equiparArmadura(armadura));
-            armaduras.add(boton);
-        }
-        if (armaduras.getComponentCount() == 0) armaduras.add(nota("No hay otras armaduras en el inventario."));
-
         tituloObjetos.setText("Objetos  ·  mochila " + p.getEspaciosUsados() + " / " + p.getCapacidadInventario()
-                + (p.mochilaLlena() ? "  (llena)" : ""));
+                + (p.isMochilaLlena() ? "  (llena)" : ""));
         objetos.removeAll();
         // los repetidos se agrupan en un solo botón: "Poción de vida chica ×2"
-        Map<String, List<Consumibles>> grupos = new LinkedHashMap<>();
-        for (Consumibles c : party.getInventario().getConsumibles()) {
+        Map<String, List<ItemDTO>> grupos = new LinkedHashMap<>();
+        for (ItemDTO c : situacion.getConsumibles()) {
             grupos.computeIfAbsent(c.getNombre(), k -> new ArrayList<>()).add(c);
         }
-        for (List<Consumibles> grupo : grupos.values()) {
-            Consumibles c = grupo.get(0);
+        for (List<ItemDTO> grupo : grupos.values()) {
+            ItemDTO c = grupo.get(0);
             String texto2 = c.getNombre() + (grupo.size() > 1 ? "  ×" + grupo.size() : "");
             JButton boton = boton(texto2, c.getDescripcion() + " (ocupa " + c.getEspacios() + " espacio/s)");
             boton.addActionListener(e -> darObjeto(c));
@@ -265,9 +239,6 @@ public class PantallaPreparacion extends JPanel {
         tituloArma.setBounds(xDerecha, y, anchoDerecha, 30);
         armas.setBounds(xDerecha, y + 32, anchoDerecha, 2 * (ALTO_BOTON + 6) + 6);
         y += 32 + 2 * (ALTO_BOTON + 6) + 14;
-        tituloArmadura.setBounds(xDerecha, y, anchoDerecha, 30);
-        armaduras.setBounds(xDerecha, y + 32, anchoDerecha, ALTO_BOTON + 12);
-        y += 32 + ALTO_BOTON + 20;
         tituloObjetos.setBounds(xDerecha, y, anchoDerecha, 30);
         objetos.setBounds(xDerecha, y + 32, anchoDerecha, alto - (y + 32) - 90);
 

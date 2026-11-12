@@ -46,7 +46,7 @@ public class CreadorMapa {
             List<Nodo> destino = filas.get(f + 1);
             int a = origen.size();
             int b = destino.size();
-            // a la fila de descanso (Fogata o Herrero) se llega desde cualquier nodo: siempre se puede elegir
+            // a la fila de descanso (Fogata) se llega desde cualquier nodo: siempre se puede elegir
             boolean haciaDescanso = f + 1 == totalfilas - 2;
             for (int i = 0; i < a; i++) {
                 for (int j = 0; j < b; j++) {
@@ -74,7 +74,7 @@ public class CreadorMapa {
                 if (f == 0) n.setTpe(TipoNodo.INICIO);
                 else if (f == filas.size() - 1) n.setTpe(TipoNodo.BOSS);
                 else if (f == 1) n.setTpe(TipoNodo.Batalla);                  // primera fila siempre batalla
-                else if (f == filas.size() - 2) n.setTpe(n.getColumna() == 0 ? TipoNodo.Fogata : TipoNodo.Herrero); // antes del boss: se elige uno
+                else if (f == filas.size() - 2) n.setTpe(TipoNodo.Fogata);   // antes del boss: una fogata para descansar
                 else n.setTpe(tipoAleatorio(f, rng));
             }
         }
@@ -82,12 +82,9 @@ public class CreadorMapa {
 
     private TipoNodo tipoAleatorio(int fila, Random rng) {
         int r = rng.nextInt(100);
-        if (r < 45) return TipoNodo.Batalla;
-        if (r < 55) return fila >= 4 ? TipoNodo.BatallaElite : TipoNodo.Batalla;
-        if (r < 67) return TipoNodo.Tesoro;
-        if (r < 82) return TipoNodo.Evento;
-        if (r < 92) return TipoNodo.Fogata;
-        return TipoNodo.Herrero;
+        if (r < 65) return TipoNodo.Batalla;
+        if (r < 85) return fila >= 4 ? TipoNodo.BatallaElite : TipoNodo.Batalla;
+        return TipoNodo.Fogata;
     }
 
     private void asignarBoss(List<List<Nodo>> filas) {

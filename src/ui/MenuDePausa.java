@@ -5,42 +5,41 @@ import javax.swing.KeyStroke;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import partida.GuardadoDePartidas;
-import partida.Partida;
+import controlador.ControladorJuego;
 
 // La pausa (botón Pausa o tecla Esc) del mapa, la preparación y el combate.
 // Todo se guarda en la ranura de la partida.
 public class MenuDePausa {
 
     // devuelve true si se sigue jugando, false si se volvió al menú
-    public static boolean abrir(VentanaPrincipal ventana, Component pantalla, Partida partida, int ranura) {
-        String aviso = partida.estaEnBatalla()
+    public static boolean abrir(Navegador navegador, Component pantalla, ControladorJuego juego) {
+        String aviso = juego.estaEnBatalla()
                 ? "Si guardás en medio de una pelea, al cargar volvés al principio de esa pelea."
-                : "La partida se guarda en la ranura " + ranura + ".";
+                : "La partida se guarda en la ranura " + juego.getRanura() + ".";
         while (true) {
             int opcion = Dialogo.elegir(pantalla, "Pausa", aviso, "Reanudar", "Guardar", "Guardar y salir", "Salir sin guardar");
             if (opcion <= 0) return true;
             if (opcion == 1) {
-                if (guardar(pantalla, partida, ranura)) Dialogo.avisar(pantalla, "Partida guardada", "Se guardó en la ranura " + ranura + ".");
+                if (guardar(pantalla, juego)) Dialogo.avisar(pantalla, "Partida guardada", "Se guardó en la ranura " + juego.getRanura() + ".");
             } else if (opcion == 2) {
-                if (guardar(pantalla, partida, ranura)) {
-                    ventana.cambiarPantallaConFundido("menu");
+                if (guardar(pantalla, juego)) {
+                    navegador.cambiarPantallaConFundido("menu");
                     return false;
                 }
             } else {
                 int seguro = Dialogo.elegir(pantalla, "Salir sin guardar",
                         "Se pierde lo que jugaste desde la última vez que guardaste.", "Salir", "Cancelar");
                 if (seguro == 0) {
-                    ventana.cambiarPantallaConFundido("menu");
+                    navegador.cambiarPantallaConFundido("menu");
                     return false;
                 }
             }
         }
     }
 
-    public static boolean guardar(Component pantalla, Partida partida, int ranura) {
+    public static boolean guardar(Component pantalla, ControladorJuego juego) {
         try {
-            GuardadoDePartidas.guardar(partida, ranura);
+            juego.guardar();
             return true;
         } catch (IOException | RuntimeException e) {
             Dialogo.avisar(pantalla, "No se pudo guardar", e.getMessage());

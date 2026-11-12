@@ -1,4 +1,5 @@
 package objetos.equipables;
+import objetos.Inventario;
 
 public class Armas extends Equipables {
 
@@ -43,15 +44,22 @@ public class Armas extends Equipables {
         return danioFisico;
     }
 
-    public void setDanioFisico(int danioFisico) {
-        this.danioFisico = danioFisico;
-    }
-
     public int getDanioMagico() {
         return danioMagico;
     }
 
-    public void setDanioMagico(int danioMagico) {
-        this.danioMagico = danioMagico;
+
+    @Override
+    public void guardarEn(Inventario inventario) { inventario.guardarArma(this); }
+
+    @Override
+    public void sacarDe(Inventario inventario) { inventario.sacarArma(this); }
+
+    @Override
+    public boolean estaEn(Inventario inventario) { return inventario.tieneArma(this); }
+
+    @Override
+    public String resumen() {
+        return getNombre() + " (+" + danioFisico + " fís, +" + danioMagico + " mág)";
     }
 }

@@ -25,4 +25,10 @@ public class ReyVampiro extends Jefe {
                 .conEfecto(() -> DanioPorTurno.sangrado(1, 2), 100)
                 .conEfecto(() -> new Debilitado(2), 100));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Rey Vampiro";
+    }
 }

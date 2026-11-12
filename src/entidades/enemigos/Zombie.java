@@ -17,4 +17,10 @@ public class Zombie extends Enemigo {
                 .conCantidadDeObjetivos(1, 2)
                 .conEfecto(() -> new ModificadorEstadistica("Ralentizado", 2).porcentaje(Estadistica.VELOCIDAD, -30), 100));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Zombie";
+    }
 }

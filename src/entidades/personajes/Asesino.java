@@ -40,4 +40,10 @@ public class Asesino extends Personaje {
     public int getCapacidadInventario() {
         return 3;
     }
+
+
+    @Override
+    public String getClase() {
+        return "Asesino";
+    }
 }

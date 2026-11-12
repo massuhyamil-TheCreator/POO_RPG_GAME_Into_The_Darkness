@@ -13,8 +13,11 @@ import entidades.enemigos.bosses.Jefe;
 import entidades.enemigos.bosses.ReyVampiro;
 import objetos.Catalogo;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.function.Function;
 
 public class GeneradorDeEncuentros {
 
@@ -24,6 +27,20 @@ public class GeneradorDeEncuentros {
     private static final String[] DEBILES = {"Zombie", "Esqueleto", "Lobo Salvaje", "Vampiro"};
     private static final String[] TODOS = {"Zombie", "Esqueleto", "Lobo Salvaje", "Vampiro", "Bruja", "Hombre Lobo"};
     private static final String[] FUERTES = {"Vampiro", "Bruja", "Hombre Lobo"};
+
+    // tipo de enemigo -> cómo crearlo (el nombre de Enemigo.getTipo()). Sin switch: un tipo nuevo es una línea más.
+    private static final Map<String, Function<String, Enemigo>> FABRICAS = new LinkedHashMap<>();
+    static {
+        FABRICAS.put("Zombie", Zombie::new);
+        FABRICAS.put("Esqueleto", Esqueleto::new);
+        FABRICAS.put("Lobo Salvaje", LoboSalvaje::new);
+        FABRICAS.put("Vampiro", Vampiro::new);
+        FABRICAS.put("Bruja", Bruja::new);
+        FABRICAS.put("Hombre Lobo", HombreLobo::new);
+        FABRICAS.put("Dragon", nombre -> new Dragon());
+        FABRICAS.put("Golem", nombre -> new Golem());
+        FABRICAS.put("Rey Vampiro", nombre -> new ReyVampiro());
+    }
 
     public static PartyEnemiga batalla(int fila) {
         if (fila < FILA_DIFICIL) return crear(DEBILES, 2);
@@ -53,32 +70,15 @@ public class GeneradorDeEncuentros {
             }
             // si hay dos iguales se llaman "Zombie" y "Zombie 2"
             String nombre = repetidos == 1 ? tipo : tipo + " " + repetidos;
-            enemigos.add(crearEnemigo(tipo, nombre));
+            enemigos.add(recrear(tipo, nombre));
         }
         return new PartyEnemiga(enemigos);
     }
 
-    // para cargar una partida guardada justo antes de una pelea: recibe el nombre de la clase Java
-    public static Enemigo recrear(String clase, String nombre) {
-        switch (clase) {
-            case "Dragon": return new Dragon();
-            case "Golem": return new Golem();
-            case "ReyVampiro": return new ReyVampiro();
-            case "LoboSalvaje": return new LoboSalvaje(nombre);
-            case "HombreLobo": return new HombreLobo(nombre);
-            default: return crearEnemigo(clase, nombre);
-        }
-    }
-
-    private static Enemigo crearEnemigo(String tipo, String nombre) {
-        switch (tipo) {
-            case "Zombie": return new Zombie(nombre);
-            case "Esqueleto": return new Esqueleto(nombre);
-            case "Lobo Salvaje": return new LoboSalvaje(nombre);
-            case "Vampiro": return new Vampiro(nombre);
-            case "Bruja": return new Bruja(nombre);
-            case "Hombre Lobo": return new HombreLobo(nombre);
-            default: throw new IllegalArgumentException("Enemigo desconocido: " + tipo);
-        }
+    // crea un enemigo por su tipo (también para cargar una partida guardada justo antes de una pelea)
+    public static Enemigo recrear(String tipo, String nombre) {
+        Function<String, Enemigo> fabrica = FABRICAS.get(tipo);
+        if (fabrica == null) throw new IllegalArgumentException("Enemigo desconocido: " + tipo);
+        return fabrica.apply(nombre);
     }
 }

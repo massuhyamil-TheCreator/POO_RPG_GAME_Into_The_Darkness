@@ -19,4 +19,10 @@ public class HombreLobo extends Enemigo {
                         .sumar(Estadistica.DEFENSA_FISICA, 3)
                         .sumar(Estadistica.DEFENSA_MAGICA, 3), 100));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Hombre Lobo";
+    }
 }

@@ -29,17 +29,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import combate.Batalla;
-import combate.EstadoCombate;
-import entidades.Entidad;
-import entidades.efectos.Efecto;
-import entidades.habilidades.Habilidad;
-import entidades.habilidades.Objetivo;
-import entidades.personajes.Personaje;
-import objetos.Item;
-import objetos.consumibles.Consumibles;
-import partida.EstadoPartida;
-import partida.Partida;
+import controlador.ControladorCombate;
+import controlador.ControladorJuego;
+import dto.CombateDTO;
+import dto.EntidadDTO;
+import dto.EstadoDelCombate;
+import dto.EstadoDelJuego;
+import dto.HabilidadDTO;
+import dto.ItemDTO;
+import dto.ResumenDeBatalla;
+import dto.SeleccionDeObjetivo;
 
 // La pelea: arriba el escenario con los personajes animados (la party a la izquierda, los enemigos a la
 // derecha) y abajo lo que va pasando (izquierda) y las acciones (derecha).
@@ -59,7 +58,7 @@ public class PantallaCombate extends JPanel {
     // =====================================================================================
     private static final String RUTA_FONDO = "src/ui/imagenes/combate/fondo.png";
 
-    // Cada entidad busca su arte según su clase de Java (e.getClass().getSimpleName()), no por la
+    // Cada entidad busca su arte según su tipo (EntidadDTO.getTipo(): "Mago", "Zombie"...), no por la
     // posición en la lista. Cada archivo es una tira de 6 cuadros de la misma animación, uno al lado
     // del otro. Para sumar una clase nueva: poner el archivo en la carpeta y agregar una línea acá.
     private static final String DIR_ALIADOS = "src/ui/imagenes/combate/aliados/";
@@ -69,9 +68,9 @@ public class PantallaCombate extends JPanel {
             "Curador", "curador.png",
             "Arquero", "arquero.png",
             "Asesino", "asesino.png",
-            "Caballero", "caballero.png",
+            "Caballero Sagrado", "caballero.png",
             "Cazador", "cazador.png",
-            "GuardiaReal", "guardiareal.png"   // invocación aliada
+            "Guardia Real", "guardiareal.png"   // invocación aliada
     );
 
     // Incluye los jefes y sus invocaciones (Golem -> CopiaDeGolem, Rey Vampiro -> Murcielago).
@@ -79,14 +78,14 @@ public class PantallaCombate extends JPanel {
     private static final Map<String, String> ARCHIVO_ENEMIGO = Map.ofEntries(
             Map.entry("Esqueleto", "esqueleto.png"),
             Map.entry("Zombie", "zombie.png"),
-            Map.entry("HombreLobo", "hombrelobo.png"),
+            Map.entry("Hombre Lobo", "hombrelobo.png"),
             Map.entry("Vampiro", "vampiro.png"),
-            Map.entry("LoboSalvaje", "lobosalvaje.png"),
+            Map.entry("Lobo Salvaje", "lobosalvaje.png"),
             Map.entry("Bruja", "bruja.png"),
             Map.entry("Golem", "copiadegolem.png"),
-            Map.entry("CopiaDeGolem", "golem.png"),
+            Map.entry("Copia de Golem", "golem.png"),
             Map.entry("Dragon", "dragon.png"),
-            Map.entry("ReyVampiro", "reyvampiro.png"),
+            Map.entry("Rey Vampiro", "reyvampiro.png"),
             Map.entry("Murcielago", "murcielago.png")
     );
     private static final int CUADROS_POR_TIRA = 6;
@@ -101,10 +100,10 @@ public class PantallaCombate extends JPanel {
     private int contadorAnimacion;
     private final Timer animacion;
 
-    private VentanaPrincipal ventana;
-    private Partida partida;
-    private int ranura;
-    private Batalla batalla;
+    private Navegador ventana;
+    private ControladorJuego juego;
+    private ControladorCombate combate;
+    private CombateDTO foto;   // cómo está la pelea; se vuelve a pedir después de cada acción
     private Timer turnoEnemigo;
 
     private JLabel titulo;
@@ -115,14 +114,14 @@ public class PantallaCombate extends JPanel {
     private JPanel acciones;
 
     // mientras se elige objetivo: a quiénes se puede tocar y qué hacer con el elegido
-    private List<Entidad> elegibles = new ArrayList<>();
-    private Consumer<Entidad> alElegir;
+    private List<EntidadDTO> elegibles = new ArrayList<>();
+    private Consumer<EntidadDTO> alElegir;
 
-    public PantallaCombate(VentanaPrincipal ventana, Partida partida, int ranura) {
+    public PantallaCombate(Navegador ventana, ControladorJuego juego) {
         this.ventana = ventana;
-        this.partida = partida;
-        this.ranura = ranura;
-        this.batalla = partida.getBatallaActual();
+        this.juego = juego;
+        this.combate = juego.getCombate();
+        this.foto = combate.getEstado();
         if (fondoCombate == null) fondoCombate = cargarImagen(RUTA_FONDO);
         setLayout(null);
 
@@ -150,7 +149,7 @@ public class PantallaCombate extends JPanel {
         MenuDePausa.conEscape(this, this::pausa);
 
         turnoEnemigo = new Timer(ESPERA_ENEMIGO, e -> {
-            batalla.turnoEnemigo();
+            combate.turnoEnemigo();
             actualizar();
         });
         turnoEnemigo.setRepeats(false);
@@ -183,46 +182,47 @@ public class PantallaCombate extends JPanel {
     // ---- El turno ----
 
     private void actualizar() {
-        Recursos.registrar(registro, batalla.tomarMensajes());
-        titulo.setText("Ronda " + batalla.getRonda() + "  ·  Turno de " + batalla.getTurnoActual().getNombre());
-        EstadoCombate estado = batalla.getEstadoCombate();
-        if (estado == EstadoCombate.VICTORIA || estado == EstadoCombate.DERROTA) {
+        Recursos.registrar(registro, combate.tomarMensajes());
+        foto = combate.getEstado();
+        titulo.setText("Ronda " + foto.getRonda() + "  ·  Turno de " + foto.getTurnoActual().getNombre());
+        EstadoDelCombate estado = foto.getEstado();
+        if (estado == EstadoDelCombate.VICTORIA || estado == EstadoDelCombate.DERROTA) {
             mostrarTarjetas();
-            menuVacio(estado == EstadoCombate.VICTORIA ? "¡Victoria!" : "La party cayó…");
+            menuVacio(estado == EstadoDelCombate.VICTORIA ? "¡Victoria!" : "La party cayó…");
             // un instante para que se vea el último golpe
             Timer fin = new Timer(600, e -> terminar());
             fin.setRepeats(false);
             fin.start();
             return;
         }
-        if (estado != EstadoCombate.EN_CURSO) return;
+        if (estado != EstadoDelCombate.EN_CURSO) return;
         elegibles.clear();
-        if (batalla.esTurnoDelJugador()) {
+        if (foto.esTurnoDelJugador()) {
             menuPrincipal();
         } else {
-            menuVacio(batalla.getTurnoActual().getNombre() + " está actuando…");
+            menuVacio(foto.getTurnoActual().getNombre() + " está actuando…");
             turnoEnemigo.restart();
         }
         mostrarTarjetas();
     }
 
-    private Personaje actual() {
-        return (Personaje) batalla.getTurnoActual();
+    private EntidadDTO actual() {
+        return foto.getTurnoActual();
     }
 
     private void menuPrincipal() {
-        Personaje p = actual();
+        EntidadDTO p = actual();
         indicacion.setText("¿Qué hace " + p.getNombre() + "?");
         acciones.removeAll();
-        agregarAccion("Atacar", "Ataque básico: " + p.getBasico().getNombre(), () -> usar(p.getBasico()));
+        agregarAccion("Atacar", "Ataque básico: " + foto.getBasico().getNombre(), () -> usar(-1));
         agregarAccion("Defender", "Recibe la mitad del daño hasta su próximo turno", () -> {
-            batalla.defender();
+            combate.defender();
             actualizar();
         });
         agregarAccion("Habilidad", "Usar una habilidad (gasta maná)", this::menuHabilidades);
         agregarAccion("Objeto", "Usar algo de la mochila", this::menuObjetos);
         agregarAccion("Pasar", "No hace nada este turno", () -> {
-            batalla.pasarTurno();
+            combate.pasarTurno();
             actualizar();
         });
         agregarAccion("Pausa", "Reanudar, guardar o salir", this::pausa);
@@ -231,18 +231,21 @@ public class PantallaCombate extends JPanel {
     }
 
     private void menuHabilidades() {
-        Personaje p = actual();
+        EntidadDTO p = actual();
         indicacion.setText("Habilidades de " + p.getNombre() + "  ·  maná " + p.getRecurso());
         acciones.removeAll();
-        for (Habilidad h : p.getHabilidades()) {
+        List<HabilidadDTO> habilidades = foto.getHabilidades();
+        for (int i = 0; i < habilidades.size(); i++) {
+            HabilidadDTO h = habilidades.get(i);
+            int indice = i;
             String texto = h.getNombre() + (h.getCosto() > 0 ? " (" + h.getCosto() + ")" : "");
-            agregarAccion(texto, h.toString(), () -> {
-                if (!h.estaDisponible()) {
-                    Recursos.registrar(registro, h.getNombre() + " todavía se está recargando.");
-                } else if (!p.tieneRecurso(h.getCosto())) {
-                    Recursos.registrar(registro, p.getNombre() + " no tiene maná suficiente para " + h.getNombre() + ".");
+            agregarAccion(texto, h.getDescripcion(), () -> {
+                // el controlador dice si se puede usar ahora (recarga, maná) y por qué no
+                String motivo = combate.motivoNoUsable(indice);
+                if (motivo != null) {
+                    Recursos.registrar(registro, motivo);
                 } else {
-                    usar(h);
+                    usar(indice);
                 }
             });
         }
@@ -252,21 +255,18 @@ public class PantallaCombate extends JPanel {
     }
 
     private void menuObjetos() {
-        Personaje p = actual();
-        if (p.getMochila().isEmpty()) {
-            Recursos.registrar(registro, p.getNombre() + " no lleva objetos.");
+        String motivo = combate.motivoSinObjetos();
+        if (motivo != null) {
+            Recursos.registrar(registro, motivo);
             return;
         }
-        if (!p.puedeUsarItems()) {
-            Recursos.registrar(registro, p.getNombre() + " no puede usar objetos ahora.");
-            return;
-        }
+        EntidadDTO p = actual();
         indicacion.setText("Mochila de " + p.getNombre());
         acciones.removeAll();
-        for (Consumibles c : p.getMochila()) {
+        for (ItemDTO c : foto.getMochila()) {
             agregarAccion(c.getNombre(), c.getDescripcion(), () -> elegirObjetivo("¿Sobre quién usás " + c.getNombre() + "?",
-                    batalla.aliadosDe(p), objetivo -> {
-                        batalla.usarConsumible(c, (Personaje) objetivo);
+                    combate.destinosDeObjeto(), objetivo -> {
+                        combate.usarConsumible(c.getIndice(), objetivo.getId());
                         actualizar();
                     }));
         }
@@ -275,42 +275,32 @@ public class PantallaCombate extends JPanel {
         acciones.repaint();
     }
 
-    // según a quién apunta la habilidad: se elige un enemigo, un aliado, o se usa directamente
-    private void usar(Habilidad habilidad) {
-        Personaje p = actual();
-        Objetivo objetivo = habilidad.getObjetivo();
-        if (!objetivo.esSobreAliados()) {
-            // si está Encantado no puede atacar al vampiro que lo encantó: solo se ofrecen los demás
-            List<Entidad> enemigos = batalla.enemigosDe(p);
-            enemigos.removeIf(enemigo -> !p.puedeAtacarA(enemigo));
-            if (enemigos.isEmpty()) {
-                Recursos.registrar(registro, p.getNombre() + " está encantado y no se anima a atacar a nadie."
-                        + " Usá un objeto, defendete o pasá el turno.");
-                return;
-            }
-            if (objetivo.hayQueElegirEnemigo()) {
-                elegirObjetivo("¿A quién ataca " + p.getNombre() + "?", enemigos, elegido -> ejecutar(habilidad, elegido));
-                return;
-            }
-        } else if (objetivo.hayQueElegirAliado()) {
-            List<Entidad> aliados = batalla.aliadosDe(p);
-            if (objetivo == Objetivo.OTRO_ALIADO) aliados.remove(p);
-            if (aliados.isEmpty()) {
-                Recursos.registrar(registro, "No hay otro aliado en pie para " + habilidad.getNombre() + ".");
-                return;
-            }
-            elegirObjetivo("¿Sobre quién usa " + habilidad.getNombre() + "?", aliados, elegido -> ejecutar(habilidad, elegido));
-            return;
+    // indice -1 = el ataque básico. El controlador dice si hay que elegir a alguien, si se usa directo o si no se puede.
+    private void usar(int indice) {
+        EntidadDTO p = actual();
+        HabilidadDTO habilidad = indice < 0 ? foto.getBasico() : foto.getHabilidades().get(indice);
+        SeleccionDeObjetivo seleccion = combate.objetivosDe(indice);
+        switch (seleccion.getModo()) {
+            case NINGUNO:
+                Recursos.registrar(registro, seleccion.getMensaje());
+                break;
+            case ELEGIR:
+                String pregunta = habilidad.eligeEnemigo() ? "¿A quién ataca " + p.getNombre() + "?"
+                        : "¿Sobre quién usa " + habilidad.getNombre() + "?";
+                elegirObjetivo(pregunta, seleccion.getCandidatos(), elegido -> ejecutar(indice, elegido.getId()));
+                break;
+            default:
+                ejecutar(indice, -1);
+                break;
         }
-        ejecutar(habilidad, null);
     }
 
-    private void ejecutar(Habilidad habilidad, Entidad objetivo) {
-        batalla.usarHabilidad(habilidad, objetivo);
+    private void ejecutar(int indice, int idObjetivo) {
+        combate.usarHabilidad(indice, idObjetivo);
         actualizar();
     }
 
-    private void elegirObjetivo(String pregunta, List<Entidad> posibles, Consumer<Entidad> accion) {
+    private void elegirObjetivo(String pregunta, List<EntidadDTO> posibles, Consumer<EntidadDTO> accion) {
         elegibles = new ArrayList<>(posibles);
         alElegir = accion;
         indicacion.setText(pregunta);
@@ -321,19 +311,28 @@ public class PantallaCombate extends JPanel {
         mostrarTarjetas();
     }
 
-    private void tocar(Entidad entidad) {
-        if (!elegibles.contains(entidad)) return;
-        Consumer<Entidad> accion = alElegir;
+    // las entidades se nombran por su id (cada foto de la pelea trae objetos nuevos)
+    private boolean esElegible(EntidadDTO entidad) {
+        if (entidad == null) return false;
+        for (EntidadDTO e : elegibles) {
+            if (e.getId() == entidad.getId()) return true;
+        }
+        return false;
+    }
+
+    private void tocar(EntidadDTO entidad) {
+        if (!esElegible(entidad)) return;
+        Consumer<EntidadDTO> accion = alElegir;
         elegibles.clear();
         accion.accept(entidad);
     }
 
     private void pausa() {
-        if (batalla.getEstadoCombate() != EstadoCombate.EN_CURSO) return;
+        if (combate.estado() != EstadoDelCombate.EN_CURSO) return;
         turnoEnemigo.stop();
-        batalla.pausar();
-        boolean seguir = MenuDePausa.abrir(ventana, this, partida, ranura);
-        batalla.reanudar();
+        combate.pausar();
+        boolean seguir = MenuDePausa.abrir(ventana, this, juego);
+        combate.reanudar();
         if (seguir) actualizar();
     }
 
@@ -341,20 +340,11 @@ public class PantallaCombate extends JPanel {
 
     private void terminar() {
         animacion.stop();
-        boolean ganada = batalla.getEstadoCombate() == EstadoCombate.VICTORIA;
-        String resumen;
-        if (ganada) {
-            List<String> objetos = new ArrayList<>();
-            for (Item item : batalla.getObjetosGanados()) objetos.add(item.getNombre());
-            resumen = "Cada personaje en pie gana " + batalla.getExperienciaGanada() + " de experiencia.\n"
-                    + "La party gana " + batalla.getOroGanado() + " de oro."
-                    + (objetos.isEmpty() ? "" : "\nEncuentran: " + String.join(", ", objetos) + ".");
-        } else {
-            resumen = "Toda la party cayó en combate.";
-        }
-        partida.terminarBatalla();
-        if (partida.getEstado() == EstadoPartida.GANADA || partida.getEstado() == EstadoPartida.PERDIDA) {
-            ventana.finalizar(partida, ranura);
+        ResumenDeBatalla resultado = juego.terminarBatalla();
+        String resumen = resultado.texto();
+        EstadoDelJuego estado = juego.getEstado();
+        if (estado == EstadoDelJuego.GANADA || estado == EstadoDelJuego.PERDIDA) {
+            ventana.finalizar();
             return;
         }
         Dialogo.avisar(this, "¡Victoria!", resumen);
@@ -383,13 +373,9 @@ public class PantallaCombate extends JPanel {
         escenario.repaint();
     }
 
-    // los estados que tiene encima (sin las pasivas, que son permanentes)
-    private String efectos(Entidad entidad) {
-        List<String> nombres = new ArrayList<>();
-        for (Efecto efecto : entidad.getEfectos()) {
-            if (!efecto.esPasiva()) nombres.add(efecto.toString());
-        }
-        return String.join(", ", nombres);
+    // los estados que tiene encima (sin las pasivas, que son permanentes): ya vienen armados en el DTO
+    private String efectos(EntidadDTO entidad) {
+        return entidad.getEfectos();
     }
 
     private void posicionar() {
@@ -433,7 +419,7 @@ public class PantallaCombate extends JPanel {
     // Se toca a una entidad para elegirla como objetivo.
     // =====================================================================================
     private class Escenario extends JPanel {
-        private Entidad bajoElMouse;
+        private EntidadDTO bajoElMouse;
 
         Escenario() {
             setOpaque(false);
@@ -441,7 +427,7 @@ public class PantallaCombate extends JPanel {
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    Entidad entidad = entidadEn(e.getPoint());
+                    EntidadDTO entidad = entidadEn(e.getPoint());
                     if (entidad != null) tocar(entidad);
                 }
 
@@ -455,29 +441,32 @@ public class PantallaCombate extends JPanel {
                 public void mouseMoved(MouseEvent e) {
                     bajoElMouse = entidadEn(e.getPoint());
                     setCursor(Cursor.getPredefinedCursor(
-                            elegibles.contains(bajoElMouse) ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+                            esElegible(bajoElMouse) ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
                 }
             });
         }
 
         @Override
         public String getToolTipText(MouseEvent e) {
-            Entidad entidad = entidadEn(e.getPoint());
+            EntidadDTO entidad = entidadEn(e.getPoint());
             if (entidad == null) return null;
             return entidad.getNombre() + "  ·  ataque " + entidad.getAtaqueFisico() + "/" + entidad.getAtaqueMagico()
                     + "  ·  defensa " + entidad.getDefensaFisica() + "/" + entidad.getDefensaMagica()
                     + "  ·  velocidad " + entidad.getVelocidad();
         }
 
-        private List<Entidad> entidades(boolean aliados) {
-            if (aliados) return new ArrayList<Entidad>(batalla.getPartyAliada().getMiembrosJugador());
-            return new ArrayList<Entidad>(batalla.getPartyEnemiga().getMiembrosEnemigos());
+        private List<EntidadDTO> entidades(boolean aliados) {
+            return aliados ? foto.getAliados() : foto.getEnemigos();
+        }
+
+        private boolean esElMouse(EntidadDTO e) {
+            return bajoElMouse != null && e.getId() == bajoElMouse.getId();
         }
 
         // Zona de cada entidad: party en la mitad izquierda, enemigos en la derecha.
         // e.esJefe() (Jefe lo pisa a true) hace que el jefe se vea más grande que sus invocaciones;
         // si tiene invocaciones al lado se achica lo justo para no pisarlas.
-        private Rectangle area(Entidad e, boolean aliado, int indice, int total) {
+        private Rectangle area(EntidadDTO e, boolean aliado, int indice, int total) {
             int mitad = getWidth() / 2;
             int hueco = mitad / Math.max(total, 1);
             int altoMaximo = getHeight() - 90;   // lugar para nombre y barras abajo
@@ -491,9 +480,9 @@ public class PantallaCombate extends JPanel {
             return new Rectangle(x, y, ancho, alto);
         }
 
-        private Entidad entidadEn(Point p) {
+        private EntidadDTO entidadEn(Point p) {
             for (boolean aliado : new boolean[]{true, false}) {
-                List<Entidad> lista = entidades(aliado);
+                List<EntidadDTO> lista = entidades(aliado);
                 for (int i = 0; i < lista.size(); i++) {
                     if (area(lista.get(i), aliado, i, lista.size()).contains(p)) return lista.get(i);
                 }
@@ -508,24 +497,24 @@ public class PantallaCombate extends JPanel {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            Entidad turno = batalla.getEstadoCombate() == EstadoCombate.EN_CURSO ? batalla.getTurnoActual() : null;
+            EntidadDTO turno = foto.getEstado() == EstadoDelCombate.EN_CURSO ? foto.getTurnoActual() : null;
             dibujarBando(g, true, turno);
             dibujarBando(g, false, turno);
             g.dispose();
         }
 
-        private void dibujarBando(Graphics2D g, boolean aliado, Entidad turno) {
-            List<Entidad> lista = entidades(aliado);
+        private void dibujarBando(Graphics2D g, boolean aliado, EntidadDTO turno) {
+            List<EntidadDTO> lista = entidades(aliado);
             for (int i = 0; i < lista.size(); i++) {
-                Entidad e = lista.get(i);
+                EntidadDTO e = lista.get(i);
                 Rectangle r = area(e, aliado, i, lista.size());
                 boolean vivo = e.estaVivo();
-                boolean elegible = elegibles.contains(e);
+                boolean elegible = esElegible(e);
 
                 // marca de "elegible": un halo dorado que late, más fuerte con el mouse encima
                 if (elegible) {
                     double latido = (Math.sin(contadorAnimacion * 0.25) + 1) / 2;   // 0..1
-                    int alfa = (e == bajoElMouse ? 150 : 70) + (int) (latido * 60);
+                    int alfa = (esElMouse(e) ? 150 : 70) + (int) (latido * 60);
                     g.setColor(new Color(226, 178, 84, Math.min(255, alfa)));
                     g.fillOval(r.x - 6, r.y + r.height - 22, r.width + 12, 30);
                 }
@@ -546,9 +535,9 @@ public class PantallaCombate extends JPanel {
 
                 if (elegible) {
                     g.setColor(Recursos.DORADO);
-                    g.setStroke(new BasicStroke(e == bajoElMouse ? 3f : 2f));
+                    g.setStroke(new BasicStroke(esElMouse(e) ? 3f : 2f));
                     g.drawRoundRect(r.x - 4, r.y - 4, r.width + 8, r.height + 8, 14, 14);
-                } else if (e == turno) {
+                } else if (turno != null && e.getId() == turno.getId()) {
                     // flechita dorada sobre quien tiene el turno
                     int cx = r.x + r.width / 2;
                     int[] xs = {cx - 10, cx + 10, cx};
@@ -562,7 +551,7 @@ public class PantallaCombate extends JPanel {
         }
 
         // nombre y nivel, vida, maná (si tiene) y los efectos que tenga encima
-        private void dibujarDatos(Graphics2D g, Entidad e, boolean aliado, Rectangle r, boolean vivo) {
+        private void dibujarDatos(Graphics2D g, EntidadDTO e, boolean aliado, Rectangle r, boolean vivo) {
             int anchoBarra = Math.max(110, Math.min(r.width, 170));
             int x = r.x + (r.width - anchoBarra) / 2;
             int y = r.y + r.height + 4;
@@ -620,10 +609,10 @@ public class PantallaCombate extends JPanel {
 
     // ---- Carga de imágenes ----
 
-    // Busca (y guarda) los 6 cuadros que le tocan a "e" según su clase. null si no hay arte
+    // Busca (y guarda) los 6 cuadros que le tocan a "e" según su tipo. null si no hay arte
     // para esa clase o falta el archivo: en ese caso se dibuja un rectángulo de color.
-    private static BufferedImage[] cuadrosDe(Entidad e, boolean aliado) {
-        String clase = e.getClass().getSimpleName();
+    private static BufferedImage[] cuadrosDe(EntidadDTO e, boolean aliado) {
+        String clase = e.getTipo();
         if (CACHE_CUADROS.containsKey(clase)) return CACHE_CUADROS.get(clase);
         Map<String, String> archivos = aliado ? ARCHIVO_ALIADO : ARCHIVO_ENEMIGO;
         String directorio = aliado ? DIR_ALIADOS : DIR_ENEMIGOS;

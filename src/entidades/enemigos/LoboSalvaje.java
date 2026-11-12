@@ -20,4 +20,10 @@ public class LoboSalvaje extends Enemigo {
                         .sumar(Estadistica.DEFENSA_FISICA, 1)
                         .sumar(Estadistica.DEFENSA_MAGICA, 1), 100));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Lobo Salvaje";
+    }
 }

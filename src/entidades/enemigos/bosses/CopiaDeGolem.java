@@ -10,4 +10,10 @@ public class CopiaDeGolem extends Enemigo {
         super("Copia de Golem", Categoria.JEFE, 1, 4, 85, 3, 1, 0, 0, 0, 0);
         setBasico(new Habilidad("Puñetazo de Piedra", 0, Objetivo.UN_ENEMIGO, 4, 0));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Copia de Golem";
+    }
 }

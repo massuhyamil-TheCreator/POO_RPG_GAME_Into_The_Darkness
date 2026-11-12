@@ -44,4 +44,10 @@ public class Guerrero extends Personaje {
     public int getCapacidadInventario() {
         return 6;
     }
+
+
+    @Override
+    public String getClase() {
+        return "Guerrero";
+    }
 }

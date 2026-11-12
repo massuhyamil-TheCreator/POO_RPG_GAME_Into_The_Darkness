@@ -47,4 +47,31 @@ public class Curador extends Personaje {
     public int getCapacidadInventario() {
         return 4;
     }
+
+
+    @Override
+    public String getClase() {
+        return "Curador";
+    }
+
+    // lo propio del Curador: la probabilidad de "El Salvador" avanza con los nodos, se reinicia en la fogata y se guarda
+    @Override
+    public void alAvanzarNodo() {
+        salvador.avanzarNodo();
+    }
+
+    @Override
+    public void alDescansarEnFogata() {
+        salvador.descansarEnFogata();
+    }
+
+    @Override
+    public String guardarEstadoPropio() {
+        return String.valueOf(salvador.getProbabilidad());
+    }
+
+    @Override
+    public void restaurarEstadoPropio(String valor) {
+        salvador.setProbabilidad(Integer.parseInt(valor));
+    }
 }

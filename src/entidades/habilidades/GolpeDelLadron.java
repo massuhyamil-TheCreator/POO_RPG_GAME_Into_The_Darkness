@@ -1,7 +1,6 @@
 package entidades.habilidades;
 import combate.Batalla;
 import entidades.Entidad;
-import entidades.enemigos.Enemigo;
 import objetos.Item;
 import java.util.List;
 
@@ -20,14 +19,13 @@ public class GolpeDelLadron extends Habilidad {
         int vidaAntes = objetivo.getPuntosDeSalud();
         List<String> mensajes = super.ejecutar(usuario, objetivos, batalla);
         boolean pego = objetivo.getPuntosDeSalud() < vidaAntes;
-        if (pego && objetivo instanceof Enemigo) {
-            Enemigo enemigo = (Enemigo) objetivo;
+        if (pego && !objetivo.esAliado()) {
             if (AZAR.nextInt(100) < PROBABILIDAD_ORO) {
-                int robado = enemigo.robarOro(ORO_MAXIMO);
+                int robado = objetivo.robarOro(ORO_MAXIMO);
                 batalla.getPartyAliada().agregarOro(robado);
                 mensajes.add("  " + usuario.getNombre() + " le roba " + robado + " de oro.");
             } else {
-                Item robado = enemigo.robarObjeto();
+                Item robado = objetivo.robarObjeto();
                 if (robado != null) {
                     batalla.getPartyAliada().getInventario().agregar(robado);
                     mensajes.add("  " + usuario.getNombre() + " le roba " + robado.getNombre() + ".");

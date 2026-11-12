@@ -24,4 +24,10 @@ public class Golem extends Jefe {
                 .conCantidadDeObjetivos(2, 2)
                 .conEfecto(() -> new ModificadorEstadistica("Embarrado", 2).porcentaje(Estadistica.VELOCIDAD, -30), 100));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Golem";
+    }
 }

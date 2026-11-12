@@ -71,4 +71,23 @@ public abstract class Enemigo extends Entidad {
     public int getExperienciaOtorgada() { return experienciaOtorgada; }
     public int getOroOtorgado() { return oroOtorgado; }
     public Item getObjetoOtorgado() { return objetoOtorgado; }
+
+
+    // nombre estable del tipo de enemigo: sirve para crearlo y para guardarlo
+    public abstract String getTipo();
+
+    @Override
+    public String getNombreDelTipo() {
+        return getTipo();
+    }
+
+    @Override
+    public boolean esAliado() {
+        return false;
+    }
+
+    @Override
+    public void unirseA(Batalla batalla) {
+        batalla.getPartyEnemiga().getMiembrosEnemigos().add(this);
+    }
 }

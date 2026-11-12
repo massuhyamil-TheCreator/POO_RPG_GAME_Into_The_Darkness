@@ -7,15 +7,14 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import partida.CreadorDePersonajes;
-import partida.GuardadoDePartidas;
-import partida.Partida;
+import controlador.ControladorJuego;
 
 // Partida nueva: se eligen los 3 personajes con su splash art, iconos y ventana de stats.
 // (merge) Ahora recibe la ranura y al tocar Continuar arma la Partida, la guarda en esa ranura
 // y abre el mapa (mismo flujo que PantallaPersonajes del amigo).
 public class PantallaSeleccionPersonajes extends JPanel {
-    private VentanaPrincipal ventana;
+    private Navegador ventana;
+    private ControladorJuego juego;
     private int ranura;
     private Image fondo;
     private Image splashArtPersonaje;
@@ -127,8 +126,9 @@ public class PantallaSeleccionPersonajes extends JPanel {
     };
     private Image[] splashArtsPersonajes = new Image[CANTIDAD_PERSONAJES];
 
-    public PantallaSeleccionPersonajes(VentanaPrincipal ventana, int ranura) {
+    public PantallaSeleccionPersonajes(Navegador ventana, ControladorJuego juego, int ranura) {
         this.ventana = ventana;
+        this.juego = juego;
         this.ranura = ranura;
         setLayout(null);
 
@@ -279,16 +279,15 @@ public class PantallaSeleccionPersonajes extends JPanel {
         });
     }
 
-    // Arma la partida con las clases elegidas, la guarda en la ranura y abre el mapa
+    // Le pide al controlador una partida con las clases elegidas (la guarda en la ranura) y abre el mapa
     private void comenzar(java.util.List<String> clasesElegidas) {
-        Partida partida = new Partida(CreadorDePersonajes.crearParty(clasesElegidas));
         try {
-            GuardadoDePartidas.guardar(partida, ranura);
+            juego.nuevaPartida(ranura, clasesElegidas);
         } catch (IOException e) {
             Dialogo.avisar(this, "No se pudo guardar", e.getMessage());
             return;
         }
-        ventana.jugar(partida, ranura);
+        ventana.jugar();
     }
 
     private Image combinarMarcoYCara(BufferedImage marco, BufferedImage cara, int tamanoFinal) {

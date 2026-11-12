@@ -10,8 +10,6 @@ import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
-import objetos.equipables.Armaduras;
-import objetos.equipables.Armas;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -23,7 +21,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.util.HashMap;
 import java.util.Map;
-import entidades.Entidad;
+import dto.EntidadDTO;
 
 // La fuente y los recortes de la hoja de paneles que usan varias pantallas.
 // Se cargan una sola vez, la primera vez que alguien los pide.
@@ -125,16 +123,6 @@ public class Recursos {
         registro.setCaretPosition(registro.getDocument().getLength());
     }
 
-    public static String describir(Armas arma) {
-        if (arma == null) return "ninguna";
-        return arma.getNombre() + " (+" + arma.getDanioFisico() + " fís, +" + arma.getDanioMagico() + " mág)";
-    }
-
-    public static String describir(Armaduras armadura) {
-        if (armadura == null) return "ninguna";
-        return armadura.getNombre() + " (+" + armadura.getDefensaFisica() + " fís, +" + armadura.getDefensaMagica() + " mág)";
-    }
-
     // "Caballero Sagrado 2" -> "CS2", para el cuadradito del retrato
     public static String iniciales(String nombre) {
         StringBuilder iniciales = new StringBuilder();
@@ -146,7 +134,7 @@ public class Recursos {
     }
 
     // (merge) Icono de la clase (los mismos de la pantalla de selección), buscado por
-    // e.getClass().getSimpleName(): así sale bien aunque el personaje se llame "Mago 2".
+    // entidad.getTipo() ("Mago", "Caballero Sagrado"...): así sale bien aunque el personaje se llame "Mago 2".
     // Los originales son de 1254x1254, así que se achican una sola vez y se guardan.
     private static final int TAMANIO_ICONO = 160;
     private static final Map<String, String> ICONO_CLASE = Map.of(
@@ -155,14 +143,14 @@ public class Recursos {
             "Curador", "Into_the_Darkness_Healer_Icon.png",
             "Arquero", "Into_the_Darkness_Archer_Icon.png",
             "Asesino", "Into_the_Darkness_Assasin_Icon.png",
-            "Caballero", "Into_the_Darkness_Knight_Icon.png",
+            "Caballero Sagrado", "Into_the_Darkness_Knight_Icon.png",
             "Cazador", "Into_the_Darkness_Hunter_Icon.png"
     );
     private static final Map<String, Image> iconos = new HashMap<>();
 
     // null si esa clase no tiene icono (enemigos, Guardia Real): la tarjeta muestra las iniciales
-    public static Image iconoDeClase(Entidad entidad) {
-        String clase = entidad.getClass().getSimpleName();
+    public static Image iconoDeClase(EntidadDTO entidad) {
+        String clase = entidad.getTipo();
         if (iconos.containsKey(clase)) return iconos.get(clase);
         Image icono = null;
         String archivo = ICONO_CLASE.get(clase);

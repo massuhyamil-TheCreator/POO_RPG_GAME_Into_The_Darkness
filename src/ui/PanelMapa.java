@@ -1,4 +1,4 @@
-package mapa;
+package ui;
 import javax.swing.*;
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -9,6 +9,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
 import java.util.function.Consumer;
+import dto.MapaDTO;
+import dto.NodoDTO;
 
 public class PanelMapa extends JPanel {
     private static final int RADIO = 22;              // para detectar clicks (la mitad de TAMANO_NODO)
@@ -27,11 +29,11 @@ public class PanelMapa extends JPanel {
     private static final BufferedImage SHEET_CONEXIONES = cargarImagen("sheet_conexiones.png");
     private static final BufferedImage SHEET_PUERTA = cargarImagen("sheet_puerta_jefe.png");
 
-    private Mapa mapa;
+    private MapaDTO mapa;
     // quien usa el panel decide qué pasa al elegir un nodo (la partida avanza, el mapa se mueve, etc.)
-    private final Consumer<Nodo> alElegir;
+    private final Consumer<NodoDTO> alElegir;
 
-    public PanelMapa(Mapa mapa, Consumer<Nodo> alElegir) {
+    public PanelMapa(MapaDTO mapa, Consumer<NodoDTO> alElegir) {
         this.mapa = mapa;
         this.alElegir = alElegir;
         setPreferredSize(new Dimension(420, 720));
@@ -41,8 +43,8 @@ public class PanelMapa extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                Nodo n = nodoEn(e.getPoint());
-                if (n != null && PanelMapa.this.mapa.puedeMoverA(n)) {
+                NodoDTO n = nodoEn(e.getPoint());
+                if (n != null && n.isAccesible()) {
                     PanelMapa.this.alElegir.accept(n);
                     repaint();
                 }
@@ -51,15 +53,15 @@ public class PanelMapa extends JPanel {
         addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                Nodo n = nodoEn(e.getPoint());
-                setToolTipText(n == null ? null : n.getTpe().name());
+                NodoDTO n = nodoEn(e.getPoint());
+                setToolTipText(n == null ? null : n.getTipo());
                 setCursor(Cursor.getPredefinedCursor(
-                        PanelMapa.this.mapa.puedeMoverA(n) ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+                        n != null && n.isAccesible() ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
             }
         });
     }
 
-    public void setMapa(Mapa mapa) {
+    public void setMapa(MapaDTO mapa) {
         this.mapa = mapa;
         repaint();
     }
@@ -71,57 +73,54 @@ public class PanelMapa extends JPanel {
     }
 
     // Cada nivel se centra horizontalmente, asi el mapa queda simetrico
-    private Point posicion(Nodo n) {
+    private Point posicion(NodoDTO n) {
         int totalFilas = mapa.getFilas().size();
         int enFila = mapa.getFilas().get(n.getFila()).size();
         int ancho = anchoSuperficie() - 2 * MARGEN;
         int alto = getHeight() - 2 * MARGEN;
-        double separacion = Math.min((double) ancho / (CreadorMapa.MaximoNodosFila - 1), SEPARACION_MAX);
+        double separacion = Math.min((double) ancho / (mapa.getMaximoNodosPorFila() - 1), SEPARACION_MAX);
         double desplazamiento = n.getColumna() - (enFila - 1) / 2.0;
         int x = getWidth() / 2 + (int) Math.round(desplazamiento * separacion);
         int y = getHeight() - MARGEN - (int) ((double) n.getFila() / (totalFilas - 1) * alto);
         return new Point(x, y);
     }
 
-    private Nodo nodoEn(Point p) {
-        for (List<Nodo> fila : mapa.getFilas())
-            for (Nodo n : fila)
+    private NodoDTO nodoEn(Point p) {
+        for (List<NodoDTO> fila : mapa.getFilas())
+            for (NodoDTO n : fila)
                 if (posicion(n).distance(p) <= RADIO) return n;
         return null;
     }
 
     // ---- que pieza de cada sheet le corresponde a cada nodo segun su estado ----
 
-    private String estadoBase(Nodo n, Nodo actual) {
+    private String estadoBase(NodoDTO n, NodoDTO actual) {
         if (n == actual) return "actual";
-        if (n.getVisitado()) return "completado";
-        if (mapa.puedeMoverA(n)) return "accesible";
+        if (n.isVisitado()) return "completado";
+        if (n.isAccesible()) return "accesible";
         return "normal";
     }
 
     // null = no lleva indicador encima (el borde de la base ya alcanza)
-    private String indicador(Nodo n, Nodo actual) {
+    private String indicador(NodoDTO n, NodoDTO actual) {
         if (n == actual) return "actual";
-        if (n.getVisitado()) return "completado";
-        if (mapa.puedeMoverA(n)) return null;
+        if (n.isVisitado()) return "completado";
+        if (n.isAccesible()) return null;
         return "candado";
     }
 
-    private String piezaIcono(TipoNodo t) {
-        switch (t) {
-            case Batalla:      return "combate";
-            case BatallaElite: return "elite";
-            case Fogata:       return "descanso";
-            case Herrero:      return "mercader";
-            case Evento:       return "evento";
-            case Tesoro:       return "tesoro";
-            case INICIO:       return "santuario";
-            default:           return null;   // BOSS usa la puerta aparte
+    private String piezaIcono(String tipo) {
+        switch (tipo) {
+            case "Batalla":      return "combate";
+            case "BatallaElite": return "elite";
+            case "Fogata":       return "descanso";
+            case "INICIO":       return "santuario";
+            default:             return null;   // BOSS usa la puerta aparte
         }
     }
 
-    private String estadoConexion(Nodo n, Nodo s, Nodo actual) {
-        if (n.getVisitado() && s.getVisitado()) return "recorrido_horizontal";
+    private String estadoConexion(NodoDTO n, NodoDTO s, NodoDTO actual) {
+        if (n.isVisitado() && s.isVisitado()) return "recorrido_horizontal";
         if (n == actual) return "disponible_horizontal";   // sale del nodo donde estoy parado: es una opcion directa
         return "pendiente_horizontal";
     }
@@ -141,25 +140,27 @@ public class PanelMapa extends JPanel {
         g.drawImage(SHEET_SUPERFICIE, xSuperficie, 0, xSuperficie + anchoSuperficie, getHeight(),
                 superficie.x, superficie.y, superficie.x + superficie.width, superficie.y + superficie.height, null);
 
-        Nodo actual = mapa.getNodoActual();
+        NodoDTO actual = mapa.getActual();
 
         // Conexiones (van debajo de los nodos)
-        for (List<Nodo> fila : mapa.getFilas())
-            for (Nodo n : fila)
-                for (Nodo s : n.getConecciones())
+        for (List<NodoDTO> fila : mapa.getFilas())
+            for (NodoDTO n : fila)
+                for (int idSiguiente : n.getConexiones()) {
+                    NodoDTO s = mapa.buscar(idSiguiente);
                     dibujarConexion(g, posicion(n), posicion(s), estadoConexion(n, s, actual));
+                }
 
         // Nodos: base + icono de tipo + indicador de estado (o la puerta, si es el BOSS)
-        for (List<Nodo> fila : mapa.getFilas())
-            for (Nodo n : fila)
+        for (List<NodoDTO> fila : mapa.getFilas())
+            for (NodoDTO n : fila)
                 dibujarNodo(g, n, actual);
     }
 
-    private void dibujarNodo(Graphics2D g, Nodo n, Nodo actual) {
+    private void dibujarNodo(Graphics2D g, NodoDTO n, NodoDTO actual) {
         Point p = posicion(n);
 
-        if (n.getTpe() == TipoNodo.BOSS) {
-            String piezaPuerta = n == actual ? "seleccionada" : mapa.puedeMoverA(n) ? "disponible" : "inactiva";
+        if ("BOSS".equals(n.getTipo())) {
+            String piezaPuerta = n == actual ? "seleccionada" : n.isAccesible() ? "disponible" : "inactiva";
             dibujarRecortadoCentrado(g, SHEET_PUERTA, RecortesSprites.get("sheet_puerta_jefe.png", piezaPuerta),
                     p.x, p.y, TAMANO_BOSS);
             return;
@@ -168,7 +169,7 @@ public class PanelMapa extends JPanel {
         dibujarRecortadoCentrado(g, SHEET_BASES, RecortesSprites.get("sheet_bases_nodos.png", estadoBase(n, actual)),
                 p.x, p.y, TAMANO_NODO);
 
-        String piezaIcono = piezaIcono(n.getTpe());
+        String piezaIcono = piezaIcono(n.getTipo());
         if (piezaIcono != null) {
             dibujarRecortadoCentrado(g, SHEET_ICONOS, RecortesSprites.get("sheet_iconos_nodos.png", piezaIcono),
                     p.x, p.y, (int) (TAMANO_NODO * 0.6));

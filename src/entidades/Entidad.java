@@ -1,6 +1,8 @@
 package entidades;
+import combate.Batalla;
 import entidades.efectos.Efecto;
 import entidades.habilidades.Habilidad;
+import objetos.Item;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -300,6 +302,26 @@ public abstract class Entidad {
     public Habilidad getBasico() { return basico; }
     public List<Habilidad> getHabilidades() { return habilidades; }
     public List<Efecto> getEfectos() { return efectos; }
+
+    // ---- Lo que cambia según el bando: lo resuelve cada subclase (polimorfismo) ----
+
+    // ¿pelea del lado del jugador?
+    public abstract boolean esAliado();
+
+    // nombre estable del tipo ("Mago", "Zombie"...): la vista lo usa para elegir el arte
+    public abstract String getNombreDelTipo();
+
+    // se suma al bando que le corresponde dentro de una batalla (las invocaciones lo usan)
+    public abstract void unirseA(Batalla batalla);
+
+    // por defecto no tiene nada para robar; los enemigos lo sobrescriben
+    public int robarOro(int maximo) {
+        return 0;
+    }
+
+    public Item robarObjeto() {
+        return null;
+    }
 
     @Override
     public String toString() {

@@ -24,4 +24,10 @@ public class GuardiaReal extends Personaje {
     public int getCapacidadInventario() {
         return 0;
     }
+
+
+    @Override
+    public String getClase() {
+        return "Guardia Real";
+    }
 }

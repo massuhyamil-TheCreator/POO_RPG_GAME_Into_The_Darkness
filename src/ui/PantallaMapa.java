@@ -14,15 +14,11 @@ import java.awt.event.ComponentEvent;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import entidades.personajes.Personaje;
-import mapa.Nodo;
-import mapa.PanelMapa;
-import mapa.TipoNodo;
-import objetos.Item;
-import objetos.equipables.Armaduras;
-import objetos.equipables.Armas;
-import partida.EstadoPartida;
-import partida.Partida;
+import controlador.ControladorJuego;
+import dto.EntidadDTO;
+import dto.ItemDTO;
+import dto.NodoDTO;
+import dto.PartidaDTO;
 
 // El mapa de la partida: la party a la izquierda, los caminos en el medio y el oro,
 // el inventario y lo que va pasando a la derecha. Tocando un nodo dorado la partida avanza.
@@ -31,9 +27,8 @@ public class PantallaMapa extends JPanel {
     private static final int ALTO_TARJETA = 96;
     private static final int MARGEN = 20;
 
-    private VentanaPrincipal ventana;
-    private Partida partida;
-    private int ranura;
+    private Navegador ventana;
+    private ControladorJuego juego;
     private Image fondo;
 
     private JLabel titulo;
@@ -48,10 +43,9 @@ public class PantallaMapa extends JPanel {
     private JButton botonGuardar;
     private JButton botonPausa;
 
-    public PantallaMapa(VentanaPrincipal ventana, Partida partida, int ranura) {
+    public PantallaMapa(Navegador ventana, ControladorJuego juego) {
         this.ventana = ventana;
-        this.partida = partida;
-        this.ranura = ranura;
+        this.juego = juego;
         // (merge) el fondo del mapa es el castillo del kit; la franja de piedra y los nodos los dibuja PanelMapa
         fondo = new ImageIcon("src/mapa/imagenes/fondo_mazmorra.png").getImage();
         setLayout(null);
@@ -66,7 +60,7 @@ public class PantallaMapa extends JPanel {
         tituloParty.setForeground(Color.WHITE);
         add(tituloParty);
 
-        List<Personaje> personajes = partida.getParty().getMiembrosJugador();
+        List<EntidadDTO> personajes = juego.getPartida().getParty();
         tarjetas = new TarjetaEntidad[personajes.size()];
         for (int i = 0; i < tarjetas.length; i++) {
             tarjetas[i] = new TarjetaEntidad(ANCHO_LATERAL, ALTO_TARJETA);
@@ -78,7 +72,7 @@ public class PantallaMapa extends JPanel {
         oro.setForeground(Recursos.DORADO);
         add(oro);
 
-        panelMapa = new PanelMapa(partida.getMapa(), this::elegirNodo);
+        panelMapa = new PanelMapa(juego.getMapa(), this::elegirNodo);
         panelMapa.setOpaque(false); // así se ve el fondo detrás de los caminos
         add(panelMapa);
 
@@ -107,7 +101,7 @@ public class PantallaMapa extends JPanel {
         });
 
         actualizar();
-        // si se cargó la partida en una fogata, herrero o pelea, se resuelve apenas termina el fundido
+        // si se cargó la partida en una fogata o en una pelea, se resuelve apenas termina el fundido
         Timer alEntrar = new Timer(900, e -> resolverNodo());
         alEntrar.setRepeats(false);
         alEntrar.start();
@@ -116,37 +110,34 @@ public class PantallaMapa extends JPanel {
     // al volver de una pelea ganada: se anota el resultado y se actualiza la party
     public void volverDelCombate(String resumen) {
         Recursos.registrar(registro, resumen);
-        Recursos.registrar(registro, partida.tomarMensajes());
+        Recursos.registrar(registro, juego.tomarMensajes());
         actualizar();
     }
 
     // ---- Moverse ----
 
-    private void elegirNodo(Nodo nodo) {
-        if (!partida.avanzarA(nodo)) return;
+    private void elegirNodo(NodoDTO nodo) {
+        if (!juego.avanzarA(nodo.getId())) return;
         resolverNodo();
     }
 
-    // según dónde quedó la partida: un aviso, la fogata, el herrero o una pelea
+    // según dónde quedó la partida: un aviso, la fogata o una pelea
     private void resolverNodo() {
-        switch (partida.getEstado()) {
+        switch (juego.getEstado()) {
             case EN_MAPA:
-                String mensajes = partida.tomarMensajes();
+                String mensajes = juego.tomarMensajes();
                 Recursos.registrar(registro, mensajes);
-                if (!mensajes.isEmpty()) Dialogo.avisar(this, nombreDelNodo(), mensajes);
+                if (!mensajes.isEmpty()) Dialogo.avisar(this, "Mapa", mensajes);
                 break;
             case EN_FOGATA:
                 fogata();
                 break;
-            case EN_HERRERO:
-                herrero();
-                break;
             case PREPARANDO_BATALLA:
-                ventana.preparar(partida, ranura);
+                ventana.preparar();
                 return;
             case GANADA:
             case PERDIDA:
-                ventana.finalizar(partida, ranura);
+                ventana.finalizar();
                 return;
             default:
                 break;
@@ -154,86 +145,50 @@ public class PantallaMapa extends JPanel {
         actualizar();
     }
 
-    private String nombreDelNodo() {
-        TipoNodo tipo = partida.getNodoActual().getTpe();
-        if (tipo == TipoNodo.Tesoro) return "Tesoro";
-        if (tipo == TipoNodo.Evento) return "Evento";
-        return "Mapa";
-    }
-
     private void fogata() {
-        Recursos.registrar(registro, partida.tomarMensajes());
+        Recursos.registrar(registro, juego.tomarMensajes());
         Dialogo.elegir(this, "Fogata", "Descansar junto al fuego recupera toda la vida y el maná, y levanta a los caídos.",
                 "Descansar");
-        partida.descansar();
-        Recursos.registrar(registro, partida.tomarMensajes());
-    }
-
-    // se mejora una sola cosa por visita: el arma o la armadura de un personaje
-    private void herrero() {
-        Recursos.registrar(registro, partida.tomarMensajes());
-        List<Personaje> personajes = partida.getParty().getMiembrosJugador();
-        while (partida.getEstado() == EstadoPartida.EN_HERRERO) {
-            String[] opciones = new String[personajes.size() + 1];
-            for (int i = 0; i < personajes.size(); i++) opciones[i] = personajes.get(i).getNombre();
-            opciones[personajes.size()] = "Irse";
-            int elegido = Dialogo.elegir(this, "Herrero",
-                    "Puede mejorar una sola cosa: el arma (+2 de daño) o la armadura (+1 a cada defensa). ¿De quién?", opciones);
-            if (elegido < 0 || elegido == personajes.size()) {
-                partida.salirDelHerrero();
-                break;
-            }
-            Personaje personaje = personajes.get(elegido);
-            int mejora = Dialogo.elegir(this, personaje.getNombre(),
-                    "Arma: " + Recursos.describir(personaje.getArma()) + "\nArmadura: " + Recursos.describir(personaje.getArmadura()),
-                    "Mejorar arma", "Reforzar armadura", "Volver");
-            if (mejora == 0) partida.mejorarArma(personaje);
-            else if (mejora == 1) partida.mejorarArmadura(personaje);
-            String mensajes = partida.tomarMensajes();
-            Recursos.registrar(registro, mensajes);
-            // si no tenía nada equipado, se avisa y se vuelve a preguntar
-            if (!mensajes.isEmpty() && partida.getEstado() == EstadoPartida.EN_HERRERO) Dialogo.avisar(this, "Herrero", mensajes);
-        }
+        juego.descansar();
+        Recursos.registrar(registro, juego.tomarMensajes());
     }
 
     // ---- Guardar y pausa ----
 
     private void guardar() {
-        if (MenuDePausa.guardar(this, partida, ranura)) {
-            Dialogo.avisar(this, "Partida guardada", "Se guardó en la ranura " + ranura + ".");
+        if (MenuDePausa.guardar(this, juego)) {
+            Dialogo.avisar(this, "Partida guardada", "Se guardó en la ranura " + juego.getRanura() + ".");
         }
     }
 
     private void pausa() {
-        MenuDePausa.abrir(ventana, this, partida, ranura);
+        MenuDePausa.abrir(ventana, this, juego);
     }
 
     // ---- Mostrar ----
 
     private void actualizar() {
-        Nodo actual = partida.getNodoActual();
-        int ultimoPiso = partida.getMapa().getFilas().size() - 1;
-        titulo.setText("Piso " + actual.getFila() + " de " + ultimoPiso + "  ·  Elegí un camino (borde dorado)");
+        PartidaDTO datos = juego.getPartida();
+        titulo.setText("Piso " + datos.getPiso() + " de " + datos.getUltimoPiso() + "  ·  Elegí un camino (borde dorado)");
+        panelMapa.setMapa(juego.getMapa());   // el mapa se vuelve a pedir cada vez: cambia al avanzar
 
-        List<Personaje> personajes = partida.getParty().getMiembrosJugador();
+        List<EntidadDTO> personajes = datos.getParty();
         for (int i = 0; i < tarjetas.length && i < personajes.size(); i++) {
-            Personaje p = personajes.get(i);
-            String experiencia = p.getNivel() >= Personaje.NIVEL_MAXIMO ? "Nivel máximo"
+            EntidadDTO p = personajes.get(i);
+            String experiencia = p.esNivelMaximo() ? "Nivel máximo"
                     : "Exp " + p.getExperiencia() + " / " + p.getExperienciaParaSubir();
             tarjetas[i].mostrar(p, experiencia);
-            tarjetas[i].setToolTipText("<html>" + p.getNombre() + "<br>Arma: " + Recursos.describir(p.getArma())
-                    + "<br>Armadura: " + Recursos.describir(p.getArmadura())
+            tarjetas[i].setToolTipText("<html>" + p.getNombre() + "<br>Arma: " + p.getArma()
                     + "<br>Ataque " + p.getAtaqueFisico() + " fís / " + p.getAtaqueMagico() + " mág"
                     + "<br>Defensa " + p.getDefensaFisica() + " fís / " + p.getDefensaMagica() + " mág"
                     + "<br>Mochila " + p.getEspaciosUsados() + " / " + p.getCapacidadInventario() + "</html>");
         }
-        oro.setText("Oro: " + partida.getParty().getOro());
+        oro.setText("Oro: " + datos.getOro());
 
         // los objetos repetidos se agrupan: "Poción de vida chica ×2"
         Map<String, Integer> cantidades = new LinkedHashMap<>();
-        for (Item item : partida.getParty().getInventario().getItems()) {
-            String nombre = item instanceof Armas ? Recursos.describir((Armas) item)
-                    : item instanceof Armaduras ? Recursos.describir((Armaduras) item) : item.getNombre();
+        for (ItemDTO item : datos.getItems()) {
+            String nombre = item.getResumen();
             cantidades.merge(nombre, 1, Integer::sum);
         }
         StringBuilder texto = new StringBuilder();

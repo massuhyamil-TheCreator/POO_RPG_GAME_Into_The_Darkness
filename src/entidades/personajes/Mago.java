@@ -44,4 +44,10 @@ public class Mago extends Personaje {
     public int getCapacidadInventario() {
         return 3;
     }
+
+
+    @Override
+    public String getClase() {
+        return "Mago";
+    }
 }

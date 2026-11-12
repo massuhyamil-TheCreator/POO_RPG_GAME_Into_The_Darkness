@@ -18,9 +18,9 @@ public class PantallaMenu extends JPanel {
     private JButton botonSalir;
     private int anchoBoton = 160;
     private int altoBoton = 55;
-    private VentanaPrincipal ventana;
+    private Navegador ventana;
 
-    public PantallaMenu(VentanaPrincipal ventana) {
+    public PantallaMenu(Navegador ventana) {
         this.ventana = ventana;
         ImageIcon icon = new ImageIcon("src/ui/imagenes/Into_The_Darkness_MainTitle.png");
         fondo = icon.getImage();

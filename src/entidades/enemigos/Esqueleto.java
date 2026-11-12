@@ -15,5 +15,11 @@ public class Esqueleto extends Enemigo {
         agregarHabilidad(new Habilidad("Maldición de la Cripta", 0, Objetivo.UN_ENEMIGO, 0, 0)
                 .conEfecto(() -> new ReduccionCuracion("Maldito", 50, 3), 100));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Esqueleto";
+    }
 }
 

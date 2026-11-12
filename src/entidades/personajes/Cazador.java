@@ -43,4 +43,10 @@ public class Cazador extends Personaje {
     public int getCapacidadInventario() {
         return 3;
     }
+
+
+    @Override
+    public String getClase() {
+        return "Cazador";
+    }
 }

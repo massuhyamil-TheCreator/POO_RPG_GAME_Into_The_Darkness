@@ -1,9 +1,9 @@
 package entidades.personajes;
+import combate.Batalla;
 import entidades.Categoria;
 import entidades.Entidad;
 import entidades.Estadistica;
 import objetos.consumibles.Consumibles;
-import objetos.equipables.Armaduras;
 import objetos.equipables.Armas;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,6 @@ public abstract class Personaje extends Entidad {
 
     private String atributoDistintivo;
     private Armas arma;
-    private Armaduras armadura;
     private List<Consumibles> mochila = new ArrayList<>();
 
     public Personaje(String nombre, String atributoDistintivo, int vida, int velocidad, int precision, int ataqueFisico, int ataqueMagico, int defensaFisica, int defensaMagica) {
@@ -93,25 +92,53 @@ public abstract class Personaje extends Entidad {
         return anterior;
     }
 
-    public Armaduras equiparArmadura(Armaduras nueva) {
-        Armaduras anterior = this.armadura;
-        this.armadura = nueva;
-        return anterior;
-    }
-
     @Override
     protected int getEstadisticaBase(Estadistica estadistica) {
         int valor = super.getEstadisticaBase(estadistica);
         switch (estadistica) {
             case ATAQUE_FISICO: return valor + (arma == null ? 0 : arma.getDanioFisico());
             case ATAQUE_MAGICO: return valor + (arma == null ? 0 : arma.getDanioMagico());
-            case DEFENSA_FISICA: return valor + (armadura == null ? 0 : armadura.getDefensaFisica());
-            case DEFENSA_MAGICA: return valor + (armadura == null ? 0 : armadura.getDefensaMagica());
             default: return valor;
         }
     }
 
     public Armas getArma() { return arma; }
-    public Armaduras getArmadura() { return armadura; }
     public String getAtributoDistintivo() { return atributoDistintivo; }
+
+
+    // ---- Lo propio de cada clase de personaje (las subclases lo completan) ----
+
+    // nombre estable de la clase: sirve para crear el personaje y para guardarlo
+    public abstract String getClase();
+
+    @Override
+    public String getNombreDelTipo() {
+        return getClase();
+    }
+
+    @Override
+    public boolean esAliado() {
+        return true;
+    }
+
+    @Override
+    public void unirseA(Batalla batalla) {
+        batalla.getPartyAliada().getMiembrosJugador().add(this);
+    }
+
+    // lo que pasa con este personaje cuando la party avanza a otro nodo o descansa;
+    // por defecto nada, y el que tenga algo para hacer lo sobrescribe
+    public void alAvanzarNodo() {
+    }
+
+    public void alDescansarEnFogata() {
+    }
+
+    // estado propio de la clase que hay que guardar (null = no tiene)
+    public String guardarEstadoPropio() {
+        return null;
+    }
+
+    public void restaurarEstadoPropio(String valor) {
+    }
 }

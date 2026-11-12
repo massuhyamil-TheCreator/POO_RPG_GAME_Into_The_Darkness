@@ -15,4 +15,10 @@ public class Vampiro extends Enemigo {
         agregarHabilidad(new Habilidad("Encanto Vampírico", 0, Objetivo.UN_ENEMIGO, 0, 8)
                 .conEfecto(() -> new Encantado(this, 2), 100));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Vampiro";
+    }
 }

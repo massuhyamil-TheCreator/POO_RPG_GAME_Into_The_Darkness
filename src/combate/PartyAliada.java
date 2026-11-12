@@ -2,7 +2,6 @@ package combate;
 import entidades.personajes.Personaje;
 import objetos.Inventario;
 import objetos.consumibles.Consumibles;
-import objetos.equipables.Armaduras;
 import objetos.equipables.Armas;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,12 +26,6 @@ public class PartyAliada {
         if (!inventario.contiene(arma)) return;
         inventario.quitar(arma);
         inventario.agregar(personaje.equiparArma(arma));
-    }
-
-    public void equiparArmadura(Personaje personaje, Armaduras armadura) {
-        if (!inventario.contiene(armadura)) return;
-        inventario.quitar(armadura);
-        inventario.agregar(personaje.equiparArmadura(armadura));
     }
 
     public boolean darConsumible(Personaje personaje, Consumibles consumible) {

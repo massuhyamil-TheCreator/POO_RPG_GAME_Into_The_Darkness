@@ -1,54 +1,56 @@
 package objetos;
 import objetos.consumibles.Consumibles;
-import objetos.equipables.Armaduras;
 import objetos.equipables.Armas;
 import java.util.ArrayList;
 import java.util.List;
 
+// Guarda los objetos de la party en una lista por tipo.
+// No pregunta "¿qué tipo sos?": cada Item le dice en qué lista va (ver Item.guardarEn).
 public class Inventario {
 
-    private List<Item> items = new ArrayList<>();
-
-    public Inventario() {
-    }
+    private final List<Armas> armas = new ArrayList<>();
+    private final List<Consumibles> consumibles = new ArrayList<>();
 
     public void agregar(Item item) {
-        if (item != null) items.add(item);
+        if (item != null) item.guardarEn(this);
     }
 
     public void quitar(Item item) {
-        items.remove(item);
+        if (item != null) item.sacarDe(this);
     }
 
     public boolean contiene(Item item) {
-        return items.contains(item);
+        return item != null && item.estaEn(this);
     }
+
+    public void vaciar() {
+        armas.clear();
+        consumibles.clear();
+    }
+
+    // ---- los llaman los propios objetos ----
+
+    public void guardarArma(Armas arma) { armas.add(arma); }
+    public void sacarArma(Armas arma) { armas.remove(arma); }
+    public boolean tieneArma(Armas arma) { return armas.contains(arma); }
+
+    public void guardarConsumible(Consumibles consumible) { consumibles.add(consumible); }
+    public void sacarConsumible(Consumibles consumible) { consumibles.remove(consumible); }
+    public boolean tieneConsumible(Consumibles consumible) { return consumibles.contains(consumible); }
+
+    // ---- consultas (devuelven copias: para modificar el inventario se usa agregar/quitar) ----
 
     public List<Armas> getArmas() {
-        List<Armas> armas = new ArrayList<>();
-        for (Item item : items) {
-            if (item instanceof Armas) armas.add((Armas) item);
-        }
-        return armas;
-    }
-
-    public List<Armaduras> getArmaduras() {
-        List<Armaduras> armaduras = new ArrayList<>();
-        for (Item item : items) {
-            if (item instanceof Armaduras) armaduras.add((Armaduras) item);
-        }
-        return armaduras;
+        return new ArrayList<>(armas);
     }
 
     public List<Consumibles> getConsumibles() {
-        List<Consumibles> consumibles = new ArrayList<>();
-        for (Item item : items) {
-            if (item instanceof Consumibles) consumibles.add((Consumibles) item);
-        }
-        return consumibles;
+        return new ArrayList<>(consumibles);
     }
 
     public List<Item> getItems() {
-        return items;
+        List<Item> todos = new ArrayList<>(armas);
+        todos.addAll(consumibles);
+        return todos;
     }
 }

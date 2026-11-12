@@ -1,8 +1,7 @@
 package objetos.equipables;
 import objetos.Item;
-// Datos compartidos por armas y armaduras.
-// (merge) Lo de clase permitida y bonos viene del catálogo por clase (CatalogoArmas/CatalogoArmaduras):
-// por ahora solo se guarda, la partida todavía no lo aplica al personaje.
+// Datos compartidos por los objetos equipables (hoy, las armas).
+// Lo de clase permitida y bonos por ahora solo se guarda: la partida todavía no lo aplica al personaje.
 public abstract class Equipables extends Item {
 
     private String tipo;

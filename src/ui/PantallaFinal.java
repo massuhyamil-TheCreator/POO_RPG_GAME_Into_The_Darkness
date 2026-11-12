@@ -11,10 +11,8 @@ import java.awt.Image;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.IOException;
-import entidades.personajes.Personaje;
-import partida.EstadoPartida;
-import partida.GuardadoDePartidas;
-import partida.Partida;
+import controlador.ControladorJuego;
+import dto.ResultadoFinal;
 
 // Cuando la partida termina: Victoria (cayó el jefe) o Game Over (cayó toda la party).
 // Muestra cómo quedó la party; con Game Over se puede volver al último guardado de la ranura.
@@ -28,8 +26,9 @@ public class PantallaFinal extends JPanel {
     private JButton botonMenu;
     private JButton botonCargar;
 
-    public PantallaFinal(VentanaPrincipal ventana, Partida partida, int ranura) {
-        boolean ganada = partida.getEstado() == EstadoPartida.GANADA;
+    public PantallaFinal(Navegador ventana, ControladorJuego juego) {
+        ResultadoFinal resultado = juego.getResultadoFinal();
+        boolean ganada = resultado.isGanada();
         fondo = new ImageIcon(ganada ? "src/ui/imagenes/Into_The_Darkness_MainTitle.png"
                 : "src/ui/imagenes/Into_The_Darkness_PlayMenu.png").getImage();
         setLayout(null);
@@ -40,13 +39,13 @@ public class PantallaFinal extends JPanel {
         add(titulo);
 
         StringBuilder texto = new StringBuilder();
-        String mensajes = partida.tomarMensajes();
+        String mensajes = resultado.getMensajes();
         if (!mensajes.isEmpty()) texto.append(mensajes).append("\n\n");
-        texto.append(ganada ? "La party salió de la oscuridad:" : "La party llegó hasta el piso " + partida.getNodoActual().getFila() + ":");
-        for (Personaje p : partida.getParty().getMiembrosJugador()) {
-            texto.append("\n   •  ").append(p.getNombre()).append("  ·  nivel ").append(p.getNivel());
+        texto.append(ganada ? "La party salió de la oscuridad:" : "La party llegó hasta el piso " + resultado.getPiso() + ":");
+        for (String linea : resultado.getParty()) {
+            texto.append("\n   •  ").append(linea);
         }
-        texto.append("\n\nOro: ").append(partida.getParty().getOro());
+        texto.append("\n\nOro: ").append(resultado.getOro());
         resumen = Recursos.areaDeTexto(22f);
         resumen.setText(texto.toString());
         cajaResumen = Recursos.caja(null, resumen);
@@ -60,12 +59,13 @@ public class PantallaFinal extends JPanel {
         botonCargar = Recursos.botonPlaca("Último guardado", 240, 62, 22f);
         botonCargar.addActionListener(e -> {
             try {
-                ventana.jugar(GuardadoDePartidas.cargar(ranura), ranura);
+                juego.cargarPartida(juego.getRanura());
+                ventana.jugar();
             } catch (IOException | RuntimeException error) {
                 Dialogo.avisar(this, "No se pudo cargar", error.getMessage());
             }
         });
-        botonCargar.setVisible(!ganada && GuardadoDePartidas.hayPartida(ranura));
+        botonCargar.setVisible(!ganada && resultado.hayGuardado());
         add(botonCargar);
 
         addComponentListener(new ComponentAdapter() {

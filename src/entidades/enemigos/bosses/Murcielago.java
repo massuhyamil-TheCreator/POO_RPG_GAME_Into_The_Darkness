@@ -20,4 +20,10 @@ public class Murcielago extends Enemigo {
         if (estadistica == Estadistica.ESQUIVA) return ESQUIVA;
         return super.getEstadisticaBase(estadistica);
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Murcielago";
+    }
 }

@@ -27,4 +27,10 @@ public class Dragon extends Jefe {
                         .sumar(Estadistica.DEFENSA_FISICA, 4), 100));
         agregarHabilidad(new Habilidad("Embestida Alada", 0, Objetivo.TODOS_LOS_ENEMIGOS, 3, 0));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Dragon";
+    }
 }

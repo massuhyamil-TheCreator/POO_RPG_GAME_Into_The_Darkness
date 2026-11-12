@@ -8,7 +8,10 @@ import entidades.personajes.Guerrero;
 import entidades.personajes.Mago;
 import entidades.personajes.Personaje;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 // Arma la party a partir de las clases que elige el jugador.
 // Cada personaje se llama como su clase; si se repite una, el segundo es "Mago 2".
@@ -16,6 +19,18 @@ public class CreadorDePersonajes {
 
     public static final List<String> CLASES = List.of(
             "Mago", "Guerrero", "Curador", "Arquero", "Asesino", "Caballero Sagrado", "Cazador");
+
+    // clase -> cómo crearla. Agregar una clase nueva es agregar una línea acá (sin switch).
+    private static final Map<String, Function<String, Personaje>> FABRICAS = new LinkedHashMap<>();
+    static {
+        FABRICAS.put("Mago", Mago::new);
+        FABRICAS.put("Guerrero", Guerrero::new);
+        FABRICAS.put("Curador", Curador::new);
+        FABRICAS.put("Arquero", Arquero::new);
+        FABRICAS.put("Asesino", Asesino::new);
+        FABRICAS.put("Caballero Sagrado", Caballero::new);
+        FABRICAS.put("Cazador", Cazador::new);
+    }
 
     public static List<Personaje> crearParty(List<String> clases) {
         List<Personaje> party = new ArrayList<>();
@@ -30,18 +45,9 @@ public class CreadorDePersonajes {
         return party;
     }
 
-    // acepta el nombre que se muestra ("Caballero Sagrado") o el de la clase Java ("Caballero")
     public static Personaje crear(String clase, String nombre) {
-        switch (clase) {
-            case "Mago": return new Mago(nombre);
-            case "Guerrero": return new Guerrero(nombre);
-            case "Curador": return new Curador(nombre);
-            case "Arquero": return new Arquero(nombre);
-            case "Asesino": return new Asesino(nombre);
-            case "Caballero Sagrado":
-            case "Caballero": return new Caballero(nombre);
-            case "Cazador": return new Cazador(nombre);
-            default: throw new IllegalArgumentException("Clase desconocida: " + clase);
-        }
+        Function<String, Personaje> fabrica = FABRICAS.get(clase);
+        if (fabrica == null) throw new IllegalArgumentException("Clase desconocida: " + clase);
+        return fabrica.apply(nombre);
     }
 }

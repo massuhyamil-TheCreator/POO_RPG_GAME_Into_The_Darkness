@@ -4,7 +4,6 @@ import combate.EstadoCombate;
 import combate.PartyAliada;
 import combate.PartyEnemiga;
 import entidades.enemigos.Enemigo;
-import entidades.personajes.Curador;
 import entidades.personajes.Personaje;
 import mapa.CreadorMapa;
 import mapa.Mapa;
@@ -12,24 +11,13 @@ import mapa.Nodo;
 import mapa.TipoNodo;
 import objetos.Catalogo;
 import objetos.Inventario;
-import objetos.Item;
-import objetos.equipables.Armaduras;
-import objetos.equipables.Armas;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 
 public class Partida {
-
-    private static final Random AZAR = new Random();
-    private static final int MEJORA_ARMA = 2;
-    private static final int MEJORA_ARMADURA = 1;
-    private static final int ORO_TESORO_MINIMO = 20;
-    private static final int ORO_TESORO_MAXIMO = 50;
-    private static final int CURACION_FUENTE = 15;
-    private static final int DANIO_TRAMPA = 8;
-    private static final int ORO_EVENTO = 30;
 
     private PartyAliada party;
     private long semilla;
@@ -39,6 +27,8 @@ public class Partida {
     private Batalla batallaActual;
     private Properties antesDeLaBatalla; // si se guarda en medio de una pelea, se guarda esto
     private List<String> registro = new ArrayList<>();
+    // qué pasa al entrar a cada tipo de nodo (agregar un tipo nuevo es agregar una línea acá)
+    private final Map<TipoNodo, EventoDeNodo> eventos = new EnumMap<>(TipoNodo.class);
 
     public Partida(List<Personaje> personajes) {
         this(personajes, System.nanoTime());
@@ -54,11 +44,13 @@ public class Partida {
         inventario.agregar(Catalogo.crear(Catalogo.ESPADA_LARGA));
         inventario.agregar(Catalogo.crear(Catalogo.BACULO_OSCURO));
         inventario.agregar(Catalogo.crear(Catalogo.ARCO_DE_CAZA));
-        inventario.agregar(Catalogo.crear(Catalogo.COTA_DE_MALLA));
-        inventario.agregar(Catalogo.crear(Catalogo.TUNICA_ENCANTADA));
         this.party = new PartyAliada(personajes, inventario);
         this.semilla = semilla;
         this.mapa = new CreadorMapa().generate(semilla);
+        eventos.put(TipoNodo.Batalla, new EventoBatalla(nodo -> GeneradorDeEncuentros.batalla(nodo.getFila())));
+        eventos.put(TipoNodo.BatallaElite, new EventoBatalla(nodo -> GeneradorDeEncuentros.elite()));
+        eventos.put(TipoNodo.BOSS, new EventoBatalla(nodo -> GeneradorDeEncuentros.jefe()));
+        eventos.put(TipoNodo.Fogata, new EventoFogata());
     }
 
     // ---- Moverse por el mapa ----
@@ -70,55 +62,35 @@ public class Partida {
     public boolean avanzarA(Nodo nodo) {
         if (estado != EstadoPartida.EN_MAPA || !mapa.puedeMoverA(nodo)) return false;
         mapa.moveTo(nodo);
-        for (Personaje p : party.getMiembrosJugador()) {
-            if (p instanceof Curador) ((Curador) p).getSalvador().avanzarNodo();
-        }
+        for (Personaje p : party.getMiembrosJugador()) p.alAvanzarNodo();
         entrarAlNodo(nodo);
         return true;
     }
 
     private void entrarAlNodo(Nodo nodo) {
-        switch (nodo.getTpe()) {
-            case Batalla:
-                prepararBatalla(GeneradorDeEncuentros.batalla(nodo.getFila()));
-                break;
-            case BatallaElite:
-                prepararBatalla(GeneradorDeEncuentros.elite());
-                break;
-            case BOSS:
-                prepararBatalla(GeneradorDeEncuentros.jefe());
-                break;
-            case Fogata:
-                registro.add("La party llega a una fogata.");
-                estado = EstadoPartida.EN_FOGATA;
-                break;
-            case Herrero:
-                registro.add("La party llega a la herrería. Se puede mejorar un arma o una armadura.");
-                estado = EstadoPartida.EN_HERRERO;
-                break;
-            case Tesoro:
-                abrirTesoro();
-                break;
-            case Evento:
-                resolverEvento();
-                break;
-            default:
-                break;
-        }
+        EventoDeNodo evento = eventos.get(nodo.getTpe());
+        if (evento != null) evento.entrar(this, nodo);   // el nodo inicial no tiene evento
+    }
+
+    // lo usa EventoFogata
+    void entrarEnFogata() {
+        registro.add("La party llega a una fogata.");
+        estado = EstadoPartida.EN_FOGATA;
     }
 
     // ---- Batallas ----
 
-    private void prepararBatalla(PartyEnemiga enemigos) {
+    // lo usa EventoBatalla
+    void prepararBatalla(PartyEnemiga enemigos) {
         enemigosPendientes = enemigos;
         List<String> nombres = new ArrayList<>();
         for (Enemigo enemigo : enemigos.getMiembrosEnemigos()) nombres.add(enemigo.getNombre());
         registro.add("¡Aparecen enemigos: " + String.join(", ", nombres) + "!");
         estado = EstadoPartida.PREPARANDO_BATALLA;
-        antesDeLaBatalla = GuardadoDePartidas.capturar(this);
+        antesDeLaBatalla = SerializadorDePartida.capturar(this);
     }
 
-    // se llama cuando el jugador terminó de elegir arma, armadura y pociones
+    // se llama cuando el jugador terminó de elegir arma y pociones
     public Batalla comenzarBatalla() {
         if (estado != EstadoPartida.PREPARANDO_BATALLA) return null;
         batallaActual = new Batalla(party, enemigosPendientes, !getNodoActual().isConsumido());
@@ -157,91 +129,10 @@ public class Partida {
             if (!p.estaVivo()) registro.add(p.getNombre() + " vuelve a levantarse.");
             p.curar(p.getPuntosDeSaludMaximos());
             p.recuperarRecurso(p.getRecursoMaximo());
-            if (p instanceof Curador) ((Curador) p).getSalvador().descansarEnFogata();
+            p.alDescansarEnFogata();
         }
         registro.add("La party descansa junto al fuego y recupera toda la vida y el maná.");
         terminarNodo();
-    }
-
-    // ---- Herrero: se mejora una sola cosa por visita ----
-
-    public boolean mejorarArma(Personaje personaje) {
-        if (estado != EstadoPartida.EN_HERRERO) return false;
-        Armas arma = personaje.getArma();
-        if (arma == null) {
-            registro.add(personaje.getNombre() + " no tiene un arma equipada.");
-            return false;
-        }
-        if (arma.getDanioFisico() >= arma.getDanioMagico()) arma.setDanioFisico(arma.getDanioFisico() + MEJORA_ARMA);
-        else arma.setDanioMagico(arma.getDanioMagico() + MEJORA_ARMA);
-        registro.add("El herrero mejora " + arma.getNombre() + " de " + personaje.getNombre() + ".");
-        terminarNodo();
-        return true;
-    }
-
-    public boolean mejorarArmadura(Personaje personaje) {
-        if (estado != EstadoPartida.EN_HERRERO) return false;
-        Armaduras armadura = personaje.getArmadura();
-        if (armadura == null) {
-            registro.add(personaje.getNombre() + " no tiene una armadura equipada.");
-            return false;
-        }
-        armadura.setDefensaFisica(armadura.getDefensaFisica() + MEJORA_ARMADURA);
-        armadura.setDefensaMagica(armadura.getDefensaMagica() + MEJORA_ARMADURA);
-        registro.add("El herrero refuerza " + armadura.getNombre() + " de " + personaje.getNombre() + ".");
-        terminarNodo();
-        return true;
-    }
-
-    public void salirDelHerrero() {
-        if (estado != EstadoPartida.EN_HERRERO) return;
-        terminarNodo();
-    }
-
-    // ---- Tesoro y Evento ----
-
-    private void abrirTesoro() {
-        Item objeto = Catalogo.botinAlAzar();
-        int oro = ORO_TESORO_MINIMO + AZAR.nextInt(ORO_TESORO_MAXIMO - ORO_TESORO_MINIMO + 1);
-        party.getInventario().agregar(objeto);
-        party.agregarOro(oro);
-        registro.add("¡Un cofre! La party encuentra " + objeto.getNombre() + " y " + oro + " de oro.");
-        terminarNodo();
-    }
-
-    private void resolverEvento() {
-        switch (AZAR.nextInt(5)) {
-            case 0:
-                for (Personaje p : party.getMiembrosJugador()) {
-                    if (p.estaVivo()) p.curar(CURACION_FUENTE);
-                }
-                registro.add("Una fuente de agua clara: los que están en pie recuperan " + CURACION_FUENTE + " de vida.");
-                terminarNodo();
-                break;
-            case 1:
-                for (Personaje p : party.getMiembrosJugador()) {
-                    // la trampa lastima pero no mata a nadie
-                    if (p.estaVivo()) p.recibirDanio(Math.min(DANIO_TRAMPA, p.getPuntosDeSalud() - 1));
-                }
-                registro.add("¡Una trampa! Los que están en pie pierden hasta " + DANIO_TRAMPA + " de vida.");
-                terminarNodo();
-                break;
-            case 2:
-                Item objeto = Catalogo.botinAlAzar();
-                party.getInventario().agregar(objeto);
-                registro.add("Un viajero les regala " + objeto.getNombre() + ".");
-                terminarNodo();
-                break;
-            case 3:
-                party.agregarOro(ORO_EVENTO);
-                registro.add("Encuentran una bolsa con " + ORO_EVENTO + " de oro.");
-                terminarNodo();
-                break;
-            default:
-                registro.add("¡Una emboscada!");
-                prepararBatalla(GeneradorDeEncuentros.batalla(getNodoActual().getFila()));
-                break;
-        }
     }
 
     private void terminarNodo() {
@@ -269,7 +160,7 @@ public class Partida {
     void retomar(EstadoPartida estado, PartyEnemiga enemigos) {
         this.estado = estado;
         this.enemigosPendientes = enemigos;
-        if (enemigos != null) antesDeLaBatalla = GuardadoDePartidas.capturar(this);
+        if (enemigos != null) antesDeLaBatalla = SerializadorDePartida.capturar(this);
     }
 
     public PartyAliada getParty() { return party; }

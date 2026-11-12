@@ -8,7 +8,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
-import entidades.Entidad;
+import dto.EntidadDTO;
 
 // El panel con retrato de un personaje o enemigo: iniciales en el cuadradito, nombre y nivel,
 // barra de vida, barra de maná y una línea de texto abajo (experiencia, efectos, etc.).
@@ -18,7 +18,7 @@ public class TarjetaEntidad extends JButton {
     private static final Color MANA = new Color(60, 110, 205);
 
     private final Image[] imagenes;
-    private Entidad entidad;
+    private EntidadDTO entidad;
     private String linea = "";
     private boolean resaltada;
 
@@ -30,7 +30,7 @@ public class TarjetaEntidad extends JButton {
         setRolloverEnabled(true);
     }
 
-    public void mostrar(Entidad entidad, String linea) {
+    public void mostrar(EntidadDTO entidad, String linea) {
         this.entidad = entidad;
         this.linea = linea == null ? "" : linea;
         repaint();
@@ -42,7 +42,7 @@ public class TarjetaEntidad extends JButton {
         repaint();
     }
 
-    public Entidad getEntidad() {
+    public EntidadDTO getEntidad() {
         return entidad;
     }
 

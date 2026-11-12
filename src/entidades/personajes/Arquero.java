@@ -49,5 +49,11 @@ public class Arquero extends Personaje {
     public int getCapacidadInventario() {
         return 4;
     }
+
+
+    @Override
+    public String getClase() {
+        return "Arquero";
+    }
 }
 

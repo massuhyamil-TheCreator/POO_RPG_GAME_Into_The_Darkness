@@ -23,4 +23,10 @@ public class Bruja extends Enemigo {
                         .porcentaje(Estadistica.DEFENSA_FISICA, 30)
                         .porcentaje(Estadistica.DEFENSA_MAGICA, 30), 100));
     }
+
+
+    @Override
+    public String getTipo() {
+        return "Bruja";
+    }
 }
